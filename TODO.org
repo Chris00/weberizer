@@ -1,0 +1,2 @@
+
+- Check browser comatibility  http://browsershots.org/
