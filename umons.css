@@ -2,6 +2,7 @@ body {
   padding: 20px;
   color: #000;
   background: #FFFFFF;
+  font-family: verdana, arial, helvetica, sans-serif;
 }
 
 div.horizontal-line {
@@ -60,7 +61,7 @@ div.umons-menu {
 
 /* style, color and size links and headings */
 .umons-menu a, .umons-menu h2 {
-  font: 12px/16px arial, helvetica, sans-serif;
+  font: 80% arial, helvetica, sans-serif;
   text-decoration: none;
   display: block;
   margin: 0;
@@ -227,7 +228,7 @@ form.recherche {
 
 
 h1, h2, h3, h4, h5, h6 {
-  font-family:Verdana, Arial, Helvetica, sans-serif;  
+  font-family: Verdana, Arial, Helvetica, sans-serif;  
 }
 
 h1 {
