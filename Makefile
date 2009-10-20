@@ -4,6 +4,8 @@ WEB=w3.umh.ac.be:~/html/umons/template
 
 OCAMLPACKS = netstring
 
+compile.exe: template.cma
+
 template.cma: template.cmo
 template.cmxa: template.cmx
 
