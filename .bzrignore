@@ -1,0 +1,7 @@
+*.annot
+*.cm[ioax]
+*.cmxa
+*.cmxs
+*.exe
+*.com
+.depend.ocaml
