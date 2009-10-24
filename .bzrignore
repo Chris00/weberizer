@@ -5,5 +5,5 @@
 *.exe
 *.com
 .depend.ocaml
-index.ml
-index.mli
+UMONS.ml
+UMONS.mli
