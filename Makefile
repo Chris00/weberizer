@@ -3,6 +3,7 @@ TARBALL=/tmp/umons.tar.gz
 WEB=w3.umh.ac.be:~/html/umons/template
 
 OCAMLPACKS = netstring
+GENERATED_PATT = index.%
 
 index.cma: index.cmo
 index.cmxa: index.cmx

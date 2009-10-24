@@ -1,4 +1,4 @@
-# Makefile.ocaml                                       -*-makefile-*-
+# Makefile.ocaml                                       -*-makefile-gmake-*-
 
 OCAMLFIND  ?= $(shell which ocamlfind)
 PP	   ?=
@@ -53,15 +53,17 @@ OCAMLOPT_FLAGS += $(if $(OCAMLINCLUDES), $(addprefix -I , $(OCAMLINCLUDES)))
 	  $(LIBS_CMXA) $(filter %.cmx %.cmxa,$(filter-out $<,$+)) \
 	  $(OCAML_PACKAGES) $(LINKPKG) $<
 
-.depend.ocaml: $(wildcard *.ml) $(wildcard *.mli)
+.depend.ocaml: $(filter-out $(GENERATED_PATT),$(wildcard *.ml *.mli))
 	@echo "Building $@ ... "
-	-@test -z "$^" || $(OCAMLDEP) $(PP_FLAGS) $(SYNTAX_OPTS) $^ > $@
+	-@test -z "$^" || $(OCAMLDEP) $(PP_FLAGS) $(SYNTAX_OPTS) $(wildcard *.ml *.mli) > $@
 # If we do not force inclusion (e.g. with "-" prefix), then it is not
 # recreated and taken into account properly.
 include .depend.ocaml
 
-
-.PHONY: clean
+.PHONY: clean dist-clean
 clean::
 	-$(RM) $(wildcard *~ *.cmi *.cmo *.cmx *.cma *.cmxa *.annot *.o *.a)
 	-$(RM) $(wildcard *.exe *.com)
+
+dist-clean:: clean
+	-$(RM) .depend.ocaml
