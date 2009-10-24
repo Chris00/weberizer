@@ -2,7 +2,7 @@
    module that allows to fill the "holes" and output the final file.
 
    ml:content="<ident>"
-   ml:strip="true"
+   ml:strip="true"   ml:strip="if empty"
    ml:replace="<ident>"
    ${<ident>}
    ${function args}
@@ -148,16 +148,18 @@ and body_of content = List.concat (List.map body_of_element content)
 (* Parse Nethtml document : search variables
  ***********************************************************************)
 
+type strip = [ `No | `Yes | `If_empty ]
+
 type document =
   | Element of string * (string * subst_string) list * document list
   | Data of subst_string
-  | Content of string * (string * subst_string) list * bool * string
+  | Content of string * (string * subst_string) list * strip * string
       (* Content(el, args, strip default, var) : content replacement *)
 
 (* Accumulator keeping given OCaml arguments *)
 type ocaml_args = {
   mutable content: string; (* var name or "" *)
-  mutable strip: bool;
+  mutable strip: strip;
 }
 
 let is_ocaml_arg s =
@@ -176,9 +178,10 @@ let rec split_args h ml args all = match all with
             if valid_ocaml_id v then ml.content <- v
             else failwith(sprintf "The variable name %S is not valid" v)
           else if a = "strip" then
-            ml.strip <- true
+            ml.strip <- (if v = "ifempty" || v = "if empty" then `If_empty
+                        else `Yes)
           else if a = "replace" then
-            if valid_ocaml_id v then (ml.content <- v; ml.strip <- true)
+            if valid_ocaml_id v then (ml.content <- v; ml.strip <- `Yes)
             else failwith(sprintf "The variable name %S is not valid" v)
         end;
         split_args h ml args tl
@@ -188,7 +191,7 @@ let rec split_args h ml args all = match all with
 let rec parse_element h html = match html with
   | Nethtml.Data(s) -> Data(parse_string h s)
   | Nethtml.Element(el, args, content) ->
-      let ml = { content = "";  strip = false } in
+      let ml = { content = "";  strip = `No } in
       let args = split_args h ml [] args in
       if ml.content <> "" then (
         Var.add h ml.content Var.HTML;
@@ -254,9 +257,10 @@ and write_rendering_node fh tpl = match tpl with
       write_rendering_list fh content;
       fprintf fh ");@]@ "
   | Content(el, args, strip, var) ->
+      (* We are writing a list.  If this must be removed *)
       (* FIXME: Use an <span> to contain a list of elements when [el]
          is stripped *)
-      let el, args = if strip then "span", [] else el, args in
+      let el, args = if strip = `Yes then "", [] else el, args in
       fprintf fh "@[<2>Nethtml.Element(%S,@ " el;
       write_args fh args;
       fprintf fh ",@ t.%s);@]@ " var
@@ -282,7 +286,15 @@ let compile fname =
   Var.iter h (fun v t ->
                 fprintf fm "  %s: %s;\n" v (Var.type_to_string t.Var.ty);
              );
-  fprintf fm "}\n@\n";
+  fprintf fm "}\n\n";
+  fprintf fm "let default_html = []\n";
+  fprintf fm "let default_string = \"\"\n";
+  fprintf fm "let default_fun _ = ()\n";
+  fprintf fm "let empty = {\n";
+  Var.iter h begin fun v t ->
+    fprintf fm "  %s = default_%s;\n" v (Var.type_to_string t.Var.ty);
+  end;
+  fprintf fm "}\n\n";
   Var.iter h (fun v _ ->
                 fprintf fm "let %s t v = { t with %s = v }\n" v v
              );
@@ -294,8 +306,12 @@ let compile fname =
   fprintf fm "(* Module interface generated from the template %s. *)\n\n" fname;
   fprintf fm "type html = Nethtml.document list\n\n";
   fprintf fm "type t\n  (** Immutable template. *)\n\n";
+  fprintf fm "val empty : t\n";
+  fprintf fm "  (** Empty (unfilled) template. *)\n";
+  fprintf fm "val render : t -> html@\n";
+  fprintf fm "  (** Renders the template as an HTML document. *)\n\n";
   Var.iter_ab h begin fun v t ->
     fprintf fm "val %s : t -> %s -> t\n" v (Var.type_to_string t.Var.ty)
   end;
-  fprintf fm "\nval render : t -> html@\n@?"; (* flush *)
+  fprintf fm "@?"; (* flush *)
   close_out fh
