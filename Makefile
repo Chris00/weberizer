@@ -4,10 +4,17 @@ WEB=w3.umh.ac.be:~/html/umons/template
 
 OCAMLPACKS = netstring
 
+index.cma: index.cmo
+index.cmxa: index.cmx
+
+index.ml index.mli: compile.exe
+	./$< index.html
+
 compile.exe: template.cma
 
 template.cma: template.cmo
 template.cmxa: template.cmx
+
 
 FILES=$(wildcard *.html *.css *.jpg *.png *.gif)
 .PHONY: tar

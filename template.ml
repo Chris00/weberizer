@@ -75,6 +75,17 @@ struct
   type set = (string, t) Hashtbl.t
 
   let make () = (Hashtbl.create 10 : set)
+  let ty h v = (Hashtbl.find h v).ty
+
+  let to_html h v = match ty h v with
+    | HTML -> "t." ^ v
+    | String -> "[Nethtml.Data(t." ^ v ^ ")]"
+    | Fun -> assert false (* funs are only in strings *)
+
+  let is_empty_code h v = match ty h v with
+    | HTML -> "t." ^ v ^ " = []"
+    | String -> "t." ^ v ^ " = \"\""
+    | Fun -> assert false (* funs are only in strings *)
 
   (* Add a new variable.  In case of conflicting types, use the
      "lower" type compatible with both. *)
@@ -237,33 +248,39 @@ let write_args fh args =
             ) args;
   fprintf fh "]@]"
 
-let rec write_rendering_fun fh tpl =
-  fprintf fh "@[<2>let render t =@\n";
-  write_rendering_list fh tpl;
-  fprintf fh "@]@\n"
-and write_rendering_list fh tpl =
-  fprintf fh "@[<1>[";
-  List.iter (fun tpl -> write_rendering_node fh tpl) tpl;
-  fprintf fh "]@]@,"
-and write_rendering_node fh tpl = match tpl with
+let rec write_rendering_fun fm h tpl =
+  fprintf fm "@[<2>let render t =@\n";
+  write_rendering_list fm h tpl;
+  fprintf fm "@]\n"
+and write_rendering_list fm h tpl =
+  fprintf fm "@[<1>[";
+  List.iter (fun tpl -> write_rendering_node fm h tpl) tpl;
+  fprintf fm "]@]@,"
+and write_rendering_node fm h tpl = match tpl with
   | Data s ->
-      fprintf fh "Nethtml.Data(";
-      write_subst_string fh s;
-      fprintf fh ");@ ";
+      fprintf fm "Nethtml.Data(";
+      write_subst_string fm s;
+      fprintf fm ");@ ";
   | Element(el, args, content) ->
-      fprintf fh "@[<2>Nethtml.Element(%S,@ " el;
-      write_args fh args;
-      fprintf fh ",@ ";
-      write_rendering_list fh content;
-      fprintf fh ");@]@ "
+      fprintf fm "@[<2>Nethtml.Element(%S,@ " el;
+      write_args fm args;
+      fprintf fm ",@ ";
+      write_rendering_list fm h content;
+      fprintf fm ");@]@ "
   | Content(el, args, strip, var) ->
-      (* We are writing a list.  If this must be removed *)
-      (* FIXME: Use an <span> to contain a list of elements when [el]
-         is stripped *)
-      let el, args = if strip = `Yes then "", [] else el, args in
-      fprintf fh "@[<2>Nethtml.Element(%S,@ " el;
-      write_args fh args;
-      fprintf fh ",@ t.%s);@]@ " var
+      (* We are writing a list.  If this must be removed, concatenate
+         with left and right lists.  FIXME: this is not ideal and
+         maybe one must move away from Nethtml representation? *)
+      match strip with
+      | `No ->
+          fprintf fm "@[<2>Nethtml.Element(%S,@ " el;
+          write_args fm args;
+          fprintf fm ",@ %s);@]@ " (Var.to_html h var)
+      | `Yes ->
+          fprintf fm "]@ @@ %s @@ [" (Var.to_html h var)
+      | `If_empty ->
+          fprintf fm "]@ @@ (if %s then [] else %s)@ @@ ["
+            (Var.is_empty_code h var) (Var.to_html h var)
 ;;
 
 (* FIXME: Clean "style" args? *)
@@ -298,7 +315,7 @@ let compile fname =
   Var.iter h (fun v _ ->
                 fprintf fm "let %s t v = { t with %s = v }\n" v v
              );
-  write_rendering_fun fm tpl;
+  write_rendering_fun fm h tpl;
   close_out fh;
   (* Output interface *)
   let fh = open_out (basename ^ ".mli") in
