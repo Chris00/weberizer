@@ -376,3 +376,17 @@ let filter_default rel_dir f =
 let iter_files ?(filter=filter_default) root f =
   if Sys.is_directory root then iter_files_in_dir filter root "" f
   else f root
+
+let email e =
+  let at = String.index e '@' in
+  let local_part = String.sub e 0 at
+  and host = String.sub e at (String.length e - at) in
+  [Nethtml.Element
+    ("script", ["type", "text/javascript"],
+     [Nethtml.Data(sprintf "<!--
+       local = %S
+       document.write('<a href=\"mailto:' + local + '%s\">'
+       + local + '%s</a>')
+       //-->" local_part host host)
+     ])]
+

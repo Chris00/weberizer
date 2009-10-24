@@ -39,3 +39,7 @@ val iter_files : ?filter:(string -> string -> bool) ->
       final file or dir [f].  Default: accept all [.html] and [.php]
       files.  Files and dirs starting with a dot are {i always}
       excluded. *)
+
+val email : string -> html
+  (** [email e] return some HTML/javascript code to protect the email
+      [e] from SPAM harvesters. *)

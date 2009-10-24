@@ -61,7 +61,7 @@
       </form>
       <span class="banner">
 	<a href="http://${web_host}"
-	   ><img src="banner.jpg" alt="${title}"/></a>
+	   ><img src="${banner}" alt="${title}"/></a>
       </span>
 
       <div id="main">
@@ -97,9 +97,9 @@
 	  Place du parc 20<span class="separation-bar">|</span
 	  >7000 Mons<span class="separation-bar">|</span
           >Belgium<span class="separation-bar">|</span
-          ><a href="mailto:${email}">${email}</a
+          ><span ml:replace="email">math@umons.ac.be</span
           ><span class="separation-bar">|</span
-	  ><a href="http://${web_host}">${web_host}</a>
+          ><a href="http://${web_host}">${web_host}</a>
 	</div>
       </div>
     </div>
