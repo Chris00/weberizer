@@ -277,10 +277,12 @@ and write_rendering_node fm h tpl = match tpl with
           write_args fm args;
           fprintf fm ",@ %s);@]@ " (Var.to_html h var)
       | `Yes ->
-          fprintf fm "]@ @@ %s @@ [" (Var.to_html h var)
+          fprintf fm "]@ @@ %s@ @@ [" (Var.to_html h var)
       | `If_empty ->
-          fprintf fm "]@ @@ (if %s then [] else %s)@ @@ ["
-            (Var.is_empty_code h var) (Var.to_html h var)
+          fprintf fm "]@ @@ @[<1>(if %s then []@ \
+	    else @[<2>[Nethtml.Element(%S,@ " (Var.is_empty_code h var) el;
+          write_args fm args;
+          fprintf fm ",@ %s)]@])@]@ @@ [" (Var.to_html h var)
 ;;
 
 (* FIXME: Clean "style" args? *)
