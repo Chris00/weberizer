@@ -340,6 +340,12 @@ let compile ?module_name fname =
 (* Utilities
  ***********************************************************************)
 
+let write_html html fname =
+  let oc = new Netchannels.output_channel (open_out fname) in
+  Nethtml.write oc html;
+  oc#close_out()
+
+
 (* [body_of doc] returns the content of the <body> (if any) of [doc]. *)
 let rec get_body_of_element = function
   | Nethtml.Data _ -> []
@@ -351,21 +357,22 @@ let body_of html =
   let body = get_body_of html in
   if body = [] then html else body
 
-let rec iter_files_in_dir filter root rel_path f =
-  if filter rel_path then begin
-    let path = Filename.concat root rel_path in
-    if Sys.is_directory path then
-      let file = Sys.readdir path in
-      for i = 0 to Array.length file - 1 do
-        let file = file.(i) in
-        if file <> "" && file.[0] <> '.' then
-          iter_files_in_dir filter root (Filename.concat rel_path file) f
-      done
-    else f rel_path
-  end
+let rec iter_files_in_dir filter root rel_dir f =
+  let dir = Filename.concat root rel_dir in
+  let files = Sys.readdir dir in
+  for i = 0 to Array.length files - 1 do
+    let file = files.(i) in
+    if file <> "" (* should not happen *) && file.[0] <> '.'
+      && filter rel_dir file then begin
+      if Sys.is_directory(Filename.concat dir file) then
+        iter_files_in_dir filter root (Filename.concat rel_dir file) f
+      else f (Filename.concat rel_dir file)
+    end
+  done
 
-let filter_default s =
-  Filename.check_suffix s ".html" || Filename.check_suffix s ".php"
+let filter_default rel_dir f =
+  Filename.check_suffix f ".html" || Filename.check_suffix f ".php"
 
 let iter_files ?(filter=filter_default) root f =
-  iter_files_in_dir filter root "" f
+  if Sys.is_directory root then iter_files_in_dir filter root "" f
+  else f root

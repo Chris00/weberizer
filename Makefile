@@ -2,7 +2,7 @@ SCP = scp -C -p
 TARBALL=/tmp/umons.tar.gz
 WEB=w3.umh.ac.be:~/html/umons/template
 
-OCAMLPACKS = netstring
+OCAMLPACKS = netstring,unix
 GENERATED_PATT = UMONS.%
 
 .PHONY: all byte native
