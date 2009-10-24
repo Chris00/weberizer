@@ -379,14 +379,17 @@ let iter_files ?(filter=filter_default) root f =
 
 let email e =
   let at = String.index e '@' in
-  let local_part = String.sub e 0 at
-  and host = String.sub e at (String.length e - at) in
-  [Nethtml.Element
-    ("script", ["type", "text/javascript"],
-     [Nethtml.Data(sprintf "<!--
-       local = %S
-       document.write('<a href=\"mailto:' + local + '%s\">'
-       + local + '%s</a>')
-       //-->" local_part host host)
-     ])]
+  let local_part = String.sub e 0 at in
+  let at = at + 1 in
+  let host = String.sub e at (String.length e - at) in
+  [Nethtml.Element("script", ["type", "text/javascript"],
+                   [Nethtml.Data(Printf.sprintf "<!--
+                     local = %S\n\
+                     document.write('<a href=\"mailto:' + local + '@%s\">' \
+                     + local + '@%s</a>')\n\
+                     //-->" local_part host host)
+                   ]);
+   Nethtml.Element("noscript", [],
+                   [Nethtml.Data(sprintf "%s(at)%s" local_part host)])
+  ]
 
