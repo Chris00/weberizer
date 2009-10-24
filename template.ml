@@ -10,6 +10,8 @@
 
 open Format
 
+type html = Nethtml.document list
+
 (* Helper functions
  ***********************************************************************)
 
@@ -149,13 +151,6 @@ and parse_var h s i0 i len_s =
 let parse_string h s = parse_string_range h s 0 0 (String.length s)
 
 
-(* [body_of doc] returns the content of the <body> (if any) of [doc]. *)
-let rec body_of_element = function
-  | Nethtml.Data _ -> []
-  | Nethtml.Element("body", args, content) -> content
-  | Nethtml.Element(_, _, content) -> body_of content
-and body_of content = List.concat (List.map body_of_element content)
-
 (* Parse Nethtml document : search variables
  ***********************************************************************)
 
@@ -287,17 +282,23 @@ and write_rendering_node fm h tpl = match tpl with
 
 (* FIXME: Clean "style" args? *)
 
-let compile fname =
-  let basename = try Filename.chop_extension fname with _ -> fname in
+let read_html fname =
   let fh = open_in fname in
   let tpl = (Nethtml.parse_document (Lexing.from_channel fh)
                ~dtd:Nethtml.relaxed_html40_dtd) in
   close_in fh;
+  tpl
+
+let compile ?module_name fname =
+  let module_name = match module_name with
+    | None -> (try Filename.chop_extension fname with _ -> fname)
+    | Some n -> n (* FIXME: check valid module name *) in
+  let tpl = read_html fname in
   (* Parse *)
   let h = Var.make() in
   let tpl = parse h tpl in
   (* Output implementation *)
-  let fh = open_out (basename ^ ".ml") in
+  let fh = open_out (module_name ^ ".ml") in
   let fm = formatter_of_out_channel fh in
   fprintf fm "(* Module generated from the template %s. *)\n@\n" fname;
   fprintf fm "type html = Nethtml.document list\n\n";
@@ -320,7 +321,7 @@ let compile fname =
   write_rendering_fun fm h tpl;
   close_out fh;
   (* Output interface *)
-  let fh = open_out (basename ^ ".mli") in
+  let fh = open_out (module_name ^ ".mli") in
   let fm = formatter_of_out_channel fh in
   fprintf fm "(* Module interface generated from the template %s. *)\n\n" fname;
   fprintf fm "type html = Nethtml.document list\n\n";
@@ -334,3 +335,37 @@ let compile fname =
   end;
   fprintf fm "@?"; (* flush *)
   close_out fh
+
+
+(* Utilities
+ ***********************************************************************)
+
+(* [body_of doc] returns the content of the <body> (if any) of [doc]. *)
+let rec get_body_of_element = function
+  | Nethtml.Data _ -> []
+  | Nethtml.Element("body", args, content) -> content
+  | Nethtml.Element(_, _, content) -> get_body_of content
+and get_body_of content = List.concat (List.map get_body_of_element content)
+
+let body_of html =
+  let body = get_body_of html in
+  if body = [] then html else body
+
+let rec iter_files_in_dir filter root rel_path f =
+  if filter rel_path then begin
+    let path = Filename.concat root rel_path in
+    if Sys.is_directory path then
+      let file = Sys.readdir path in
+      for i = 0 to Array.length file - 1 do
+        let file = file.(i) in
+        if file <> "" && file.[0] <> '.' then
+          iter_files_in_dir filter root (Filename.concat rel_path file) f
+      done
+    else f rel_path
+  end
+
+let filter_default s =
+  Filename.check_suffix s ".html" || Filename.check_suffix s ".php"
+
+let iter_files ?(filter=filter_default) root f =
+  iter_files_in_dir filter root "" f
