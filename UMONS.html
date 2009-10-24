@@ -20,7 +20,7 @@
     <div id="menucol">
       <!-- Conditionally include UMONS+txt.svg if the browser supports it? -->
       <a href="http://www.umons.ac.be" class="logo"
-	 ><img src="UMONS+txt.jpg" alt="UMons" /></a>
+	 ><img src="images/UMONS+txt.jpg" alt="UMons" /></a>
 
       <div class="umons-menu" ml:content="menu" >
 	<ul></ul>
@@ -57,7 +57,8 @@
 	       />
 	<input type="hidden" name="as_sitesearch"
 	       value="${web_host}" />
-	<button type="submit"><img src="gosearch.gif" alt="Search"></button>
+	<button type="submit"
+		><img src="images/gosearch.gif" alt="Search"></button>
       </form>
       <span class="banner">
 	<a href="http://${web_host}"
@@ -68,9 +69,12 @@
 
 	<div id="advertisements" ml:content="advertisements"
 	     ml:strip="if empty">
+	  Advertisements (if any).
+	  <div class="news">news</div>
+	  <div class="actions">actions</div>
 	</div>
 
-	<span ml:replace="main">Main text</span>
+	<span ml:replace="main">Main text area.</span>
 	<!--
 	<h2>Sous-titre</h2>
 	<h3>Sous-titre (niveau 3)</h3>
@@ -87,11 +91,12 @@
     <div id="footer">
       <div class="left">
 	<a href="http://www.umons.ac.be"
-	   ><img src="UMONS.jpg" alt="UMons" /></a>
+	   ><img src="images/UMONS.jpg" alt="UMons" /></a>
       </div>
       <div class="right">
 	<a href="http://www.academiewb.be/"
-	   ><img src="Academie.png" alt="Académie Wallonie-Bruxelles" /></a>
+	   ><img src="images/Academie.png" alt="Académie Wallonie-Bruxelles"
+		 /></a>
 
 	<div class="horizontal-toolbar">
 	  Place du parc 20<span class="separation-bar">|</span
