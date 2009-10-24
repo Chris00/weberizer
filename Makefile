@@ -5,6 +5,11 @@ WEB=w3.umh.ac.be:~/html/umons/template
 OCAMLPACKS = netstring
 GENERATED_PATT = UMONS.%
 
+.PHONY: all byte native
+all: byte native
+byte: UMONS.cma template.cma
+native: UMONS.cmxa template.cmxa
+
 UMONS.cma: UMONS.cmo
 UMONS.cmxa: UMONS.cmx
 
