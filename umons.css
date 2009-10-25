@@ -51,7 +51,7 @@ div.umons-menu {
   width: 70%;
   float: left;
   margin-top: 13ex;
-} 
+}
 
 .umons-menu ul { /* remove bullets and list indents */
   list-style: none;
@@ -103,7 +103,7 @@ div.umons-menu {
 .umons-menu li {
   /* make the list elements a containing block for the nested lists */
   position: relative;
-} 
+}
 
 .umons-menu ul ul ul {
   position: absolute;
@@ -228,7 +228,7 @@ form.recherche {
 
 
 h1, h2, h3, h4, h5, h6 {
-  font-family: Verdana, Arial, Helvetica, sans-serif;  
+  font-family: Verdana, Arial, Helvetica, sans-serif;
 }
 
 h1 a, h2 a, h3 a, h4 a, h5 a, h6 a {
@@ -247,6 +247,21 @@ h2, h2 a { color: rgb(0, 171, 204) }
 h2 {
   font-weight: normal;
   font-size: 140%;
+}
+
+h3, h3 a { color: black }
+h3 {
+  font-weight: bold;
+  font-size: 110%;
+  margin-bottom: 0.8ex;
+}
+
+h4, h4 a { color: black }
+h4 {
+  font-weight: normal;
+  font-style: italic;
+  font-size: 110%;
+  margin-bottom: 0.5ex;
 }
 
 ul {
