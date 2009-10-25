@@ -366,7 +366,7 @@ let rec iter_files_in_dir filter root rel_dir f =
       && filter rel_dir file then begin
       if Sys.is_directory(Filename.concat dir file) then
         iter_files_in_dir filter root (Filename.concat rel_dir file) f
-      else f (Filename.concat rel_dir file)
+      else f rel_dir file
     end
   done
 
@@ -375,7 +375,12 @@ let filter_default rel_dir f =
 
 let iter_files ?(filter=filter_default) root f =
   if Sys.is_directory root then iter_files_in_dir filter root "" f
-  else f root
+  else f (Filename.dirname root) (Filename.basename root)
+
+let rec revert_path p =
+  let dir = Filename.dirname p in
+  if dir = "." then (if Filename.basename p = "." then "" else "../")
+  else Filename.concat ".." (revert_path dir)
 
 let email e =
   let at = String.index e '@' in

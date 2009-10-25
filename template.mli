@@ -28,17 +28,23 @@ val body_of : html -> html
       entire document if no body is found. *)
 
 val iter_files : ?filter:(string -> string -> bool) ->
-  string -> (string -> unit) -> unit
-  (** [iter_files root f] iterates [f fname] on all files under [root]
-      (that is [root] itself if it is a file and all files in [root]
-      and its subdirectories if [root] is a directory) where [fname]
-      is the name of the file relative to [root].
+  string -> (string -> string -> unit) -> unit
+  (** [iter_files root f] iterates [f rel_dir fname] on all files
+      under [root] (that is [root] itself if it is a file and all
+      files in [root] and its subdirectories if [root] is a directory)
+      where [fname] is the base name of the file and [rel_path] its
+      relative path to [root].
 
       @param filter examine the file of dir iff the condition [filter
       rel_dir f] holds on the relative path [rel_dir] from [root] and
       final file or dir [f].  Default: accept all [.html] and [.php]
       files.  Files and dirs starting with a dot are {i always}
       excluded. *)
+
+val revert_path : string -> string
+  (** [revert_path p] returns a relative path [q] so that cd [p]
+      followed by cd [q] is equivalent to staying in the current
+      directory (assuming [p] exists). *)
 
 val email : string -> html
   (** [email e] return some HTML/javascript code to protect the email
