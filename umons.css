@@ -48,7 +48,7 @@ a.logo, a.logo:hover {
 /* Menu */
 /* http://www.seoconsultants.com/css/menus/tutorial/ */
 div.umons-menu {
-  width: 70%;
+  width: 72%;
   float: left;
   margin-top: 13ex;
 }
@@ -61,7 +61,7 @@ div.umons-menu {
 
 /* style, color and size links and headings */
 .umons-menu a, .umons-menu h2 {
-  font: 80% arial, helvetica, sans-serif;
+  font: 83% arial, helvetica, sans-serif;
   text-decoration: none;
   display: block;
   margin: 0;
@@ -78,7 +78,7 @@ div.umons-menu {
   /* background: #bb022c; */
   /* text-transform: uppercase; */
   font-weight: bold;
-  font-size: 80%;
+  font-size: 85%;
 }
 
 .umons-menu a {
@@ -88,7 +88,7 @@ div.umons-menu {
 }
 
 .umons-menu a.submenu {
-  background: white url(right_arrow.png) no-repeat center right;
+  background: white url(images/right_arrow.png) no-repeat center right;
 }
 
 .umons-menu a:hover {
@@ -97,7 +97,7 @@ div.umons-menu {
 }
 
 .umons-menu a.submenu:hover {
-  background: #ededed url(right_arrow.png) no-repeat center right;
+  background: #ededed url(images/right_arrow.png) no-repeat center right;
 }
 
 .umons-menu li {
