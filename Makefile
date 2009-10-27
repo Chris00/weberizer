@@ -35,3 +35,9 @@ upload-html:
 	$(SCP) $(filter %.html %.css, $(FILES)) $(WEB)
 
 include Makefile.ocaml
+
+dist-clean::
+	$(RM) UMONS.ml UMONS.mli
+
+# Dependencies for the generated files
+UMONS.cmo UMONS.cmx: UMONS.cmi
