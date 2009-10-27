@@ -271,6 +271,10 @@ ul {
   padding-left: 1.5em;
 }
 
+ul ul {
+  list-style: circle;
+}
+
 a {
   color: rgb(0, 171, 204);
   text-decoration: none;
