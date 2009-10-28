@@ -10,7 +10,7 @@
 	  content="Mathématique, Université de Mons, Belgique, Mathematics, Mons, Bergen, University, Belgium, Math, Maths" />
 
     <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1" />
-    <link rel="stylesheet" type="text/css" href="${root}umons.css" />
+    <link rel="stylesheet" type="text/css" href="${url_base}umons.css" />
     <!-- You can include your own stylesheets. -->
   </head>
   <body>
@@ -19,8 +19,8 @@
     </div>
     <div id="menucol">
       <!-- Conditionally include UMONS+txt.svg if the browser supports it? -->
-      <a href="http://www.umons.ac.be" class="logo"
-	 ><img src="${root}images/UMONS+txt.jpg" alt="UMons" /></a>
+      <a href="http://www.umons.ac.be/${lang}" class="logo"
+	 ><img src="${url_base}images/UMONS+txt.jpg" alt="UMons" /></a>
 
       <div class="umons-menu" ml:content="menu" >
 	<ul></ul>
@@ -58,11 +58,11 @@
 	<input type="hidden" name="as_sitesearch"
 	       value="${web_host}" />
 	<button type="submit"
-		><img src="${root}images/gosearch.gif" alt="Search"></button>
+		><img src="${url_base}images/gosearch.gif" alt="Search"></button>
       </form>
       <span class="banner">
 	<a href="http://${web_host}"
-	   ><img src="${root}images/${banner}" alt="${title}"/></a>
+	   ><img src="${url_base}images/${banner}" alt="${title}"/></a>
       </span>
 
       <div id="main">
@@ -91,11 +91,11 @@
     <div id="footer">
       <div class="left">
 	<a href="http://www.umons.ac.be"
-	   ><img src="${root}images/UMONS.jpg" alt="UMons" /></a>
+	   ><img src="${url_base}images/UMONS.jpg" alt="UMons" /></a>
       </div>
       <div class="right">
 	<a href="http://www.academiewb.be/"
-	   ><img src="${root}images/Academie.png"
+	   ><img src="${url_base}images/Academie.png"
 		 alt="Académie Wallonie-Bruxelles" /></a>
 
 	<div class="horizontal-toolbar">
