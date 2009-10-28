@@ -9,6 +9,7 @@
 *)
 
 open Format
+open Neturl
 
 type html = Nethtml.document list
 
@@ -397,4 +398,23 @@ let email e =
    Nethtml.Element("noscript", [],
                    [Nethtml.Data(sprintf "%s(at)%s" local_part host)])
   ]
+
+
+let is_href (a, _) = a = "href"
+
+let apply_relative_href base ((e, url) as arg) =
+  let url = parse_url url ~base_syntax:ip_url_syntax in
+  try (e, string_of_url(apply_relative_url base url))
+  with Malformed_URL -> arg
+
+let rec apply_relative_url base html =
+  List.map (apply_relative_url_element base) html
+and apply_relative_url_element base = function
+  | Nethtml.Element("a", args, content) ->
+      let href, args = List.partition is_href args in
+      let href = List.map (apply_relative_href base) href in
+      Nethtml.Element("a", href @ args, content)
+  | Nethtml.Element(e, args, content) ->
+      Nethtml.Element(e, args, apply_relative_url base content)
+  | Nethtml.Data _ as e -> e
 

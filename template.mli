@@ -49,3 +49,7 @@ val revert_path : string -> string
 val email : string -> html
   (** [email e] return some HTML/javascript code to protect the email
       [e] from SPAM harvesters. *)
+
+val apply_relative_url : Neturl.url -> html -> html
+  (** [apply_relative_url base html] prefix all relative URLs in
+      [html] by [base]. *)
