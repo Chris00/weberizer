@@ -364,3 +364,13 @@ a.know-more {
   background: #fffea8;
   color: rgb(176,11,58);
 }
+
+/* Quotations */
+blockquote {
+  float: right;
+  clear: both;
+  width: 70%;
+  font-style: italic;
+  text-align: right;
+  font-size: 90%;
+}
