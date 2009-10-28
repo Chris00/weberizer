@@ -396,7 +396,10 @@ let email e =
                      //-->" local_part host host)
                    ]);
    Nethtml.Element("noscript", [],
-                   [Nethtml.Data(sprintf "%s(at)%s" local_part host)])
+                   [Nethtml.Data(local_part);
+                    Nethtml.Element("abbr", ["title", "(at) -> @"],
+                                    [Nethtml.Data "(at)"]);
+                    Nethtml.Data host])
   ]
 
 
