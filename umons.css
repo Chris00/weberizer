@@ -275,6 +275,10 @@ ul ul {
   list-style: circle;
 }
 
+li {
+  line-height: 1.5ex;
+}
+
 a {
   color: rgb(0, 171, 204);
   text-decoration: none;
