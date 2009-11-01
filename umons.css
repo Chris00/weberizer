@@ -85,7 +85,8 @@ div.umons-menu {
   color: #505050;
   text-decoration: none;
   border: 0;
-  padding-left: 0.6ex;
+  border-left: 0.4ex solid #FFF;
+  padding-left: 0.2ex;
 }
 
 .umons-menu a.submenu {
@@ -115,7 +116,8 @@ div.umons-menu {
 }
 
 .umons-menu ul ul ul a {
-  padding-left: 0.6ex;
+  border-left: 0.4ex solid #ededed;
+  padding-left: 0.2ex;
   background: #ededed;
 }
 
