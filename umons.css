@@ -94,8 +94,8 @@ div.umons-menu {
 
 .umons-menu a:hover {
   /* font-weight: bold; */
-  border-left: 0.4ex solid rgb(0, 171, 204);
-  padding-left: 0.2ex;
+  border-left: 0.3ex solid rgb(0, 171, 204);
+  padding-left: 0.3ex;
 }
 
 .umons-menu a.submenu:hover {
