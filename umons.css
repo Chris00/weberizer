@@ -278,11 +278,12 @@ ul ul {
 }
 
 li {
-  line-height: 1.5ex;
+  line-height: 2ex;
 }
 
 a {
-  color: rgb(0, 171, 204);
+/*  color: rgb(0, 171, 204);*/
+    color: rgb(0, 50, 255);
   text-decoration: none;
 /*  border-bottom: dashed 1px rgb(0, 171, 204);*/
 }
