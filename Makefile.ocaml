@@ -1,6 +1,6 @@
 # Makefile.ocaml                                       -*-makefile-gmake-*-
 
-OCAMLFIND  ?= $(shell which ocamlfind)
+OCAMLFIND  ?= "$(shell which ocamlfind)"
 PP	   ?=
 OCAMLC     ?= $(OCAMLFIND) ocamlc
 OCAMLOPT   ?= $(OCAMLFIND) ocamlopt

@@ -280,7 +280,7 @@ ul ul {
 a {
   color: rgb(0, 171, 204);
   text-decoration: none;
-  border-bottom: dashed 1px rgb(0, 171, 204);
+  border-bottom: dotted 1px rgb(0, 171, 204);
 }
 
 a:hover {
