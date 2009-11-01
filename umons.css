@@ -376,3 +376,14 @@ blockquote {
   text-align: right;
   font-size: 90%;
 }
+
+/* Table */
+tr.even {
+  background-color: #ddeef0;
+}
+
+tr.even td {
+  padding-top: 0.3ex;
+  padding-bottom: 0.5ex;
+}
+
