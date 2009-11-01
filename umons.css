@@ -90,7 +90,7 @@ div.umons-menu {
 }
 
 .umons-menu a.submenu {
-  background: white url(images/right_arrow.png) no-repeat center right;
+  background: #FFF url(images/right_arrow.png) no-repeat center right;
 }
 
 .umons-menu a:hover {
@@ -196,7 +196,7 @@ div.umons-menu {
 
 .horizontal-toolbar a:hover {
   color: rgb(204,0,51);
-  background: white;
+  background: #FFF;
   text-decoration: underline;
 }
 span.separation-bar {
@@ -381,7 +381,11 @@ blockquote {
 
 /* Table */
 tr.even {
-  background-color: #ddeef0;
+  background-color: #ededed;
+}
+
+tr.even a:hover {
+  background-color: #FFF;
 }
 
 tr.even td {
