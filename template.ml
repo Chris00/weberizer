@@ -138,6 +138,30 @@ type string_or_var =
   | Fun of string * string list         (* Fun(ident, args) *)
 type subst_string = string_or_var list
 
+let rec parse_string_range add_string add_var acc s i0 i len_s =
+  if i >= len_s then
+    let len = i - i0 in
+    if len = 0 then acc else add_string acc (String.sub s i0 len)
+  else if i + 1 < len_s && s.[i] = '$' && s.[i+1] = '{' then
+    let len = i - i0 in
+    if len = 0 then parse_var add_string add_var acc s (i+2) (i+2) len_s
+    else (
+      let acc = add_string acc (String.sub s i0 len) in
+      parse_var add_string add_var acc s (i+2) (i+2) len_s
+    )
+  else
+    parse_string_range add_string add_var acc s i0 (i+1) len_s
+and parse_var add_string add_var acc s i0 i len_s =
+  if i >= len_s then
+    invalid_arg(sprintf "Missing '}' to close the variable %S"
+                (String.sub s i0 (len_s - i0)))
+  else if s.[i] = '}' then (
+    let acc = add_var acc (String.sub s i0 (i - i0)) in
+    parse_string_range add_string add_var acc s (i+1) (i+1) len_s
+  )
+  else parse_var add_string add_var acc s i0 (i+1) len_s
+
+
 let decode_var h v =
   match split_on_spaces v with
   | [] | "" :: _ -> invalid_arg "Empty variables are not allowed"
@@ -148,26 +172,30 @@ let decode_var h v =
       if valid_ocaml_id v then (Var.add h v Var.Fun; Fun(v, args))
       else invalid_arg(sprintf "Function name %S is not valid" v)
 
-let rec parse_string_range h s i0 i len_s : subst_string =
-  if i >= len_s then
-    let len = i - i0 in
-    if len = 0 then [] else [String(String.sub s i0 len)]
-  else if i + 1 < len_s && s.[i] = '$' && s.[i+1] = '{' then
-    let len = i - i0 in
-    if len = 0 then parse_var h s (i+2) (i+2) len_s
-    else String(String.sub s i0 len) :: parse_var h s (i+2) (i+2) len_s
-  else
-    parse_string_range h s i0 (i+1) len_s
-and parse_var h s i0 i len_s =
-  if i >= len_s then
-    invalid_arg(sprintf "Missing '}' to close the variable %S"
-                (String.sub s i0 (len_s - i0)))
-  else if s.[i] = '}' then
-    decode_var h (String.sub s i0 (i - i0))
-    :: parse_string_range h s (i+1) (i+1) len_s
-  else parse_var h s i0 (i+1) len_s
+let parse_string h s =
+  let add_string l s = String s :: l in
+  let add_var l v = decode_var h v :: l in
+  List.rev(parse_string_range add_string add_var [] s 0 0 (String.length s))
 
-let parse_string h s = parse_string_range h s 0 0 (String.length s)
+
+let subst_var h v =
+  match split_on_spaces v with
+  | [] | "" :: _ -> invalid_arg "Empty variables are not allowed"
+  | [v] ->
+      if valid_ocaml_id v then (v)
+      else invalid_arg(sprintf "Variable %S is not a valid OCaml identifier" v)
+  | v :: args ->
+      if valid_ocaml_id v then (v)
+      else invalid_arg(sprintf "Function name %S is not valid" v)
+
+let subst_string h s =
+  let len_s = String.length s in
+  let buf = Buffer.create len_s in
+  let add_string _ s = Buffer.add_string buf s in
+  let add_var _ v = Buffer.add_string buf v in
+  parse_string_range add_string add_var () s 0 0 len_s;
+  Buffer.contents buf
+
 
 
 (* Parse Nethtml document : search variables
