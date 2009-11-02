@@ -497,6 +497,12 @@ and subst bindings html =
   List.concat(List.map (subst_element bindings) html)
 
 
+let read ?bindings fname =
+  let html = read_html fname in
+  match bindings with
+  | None -> html
+  | Some b -> subst b html
+
 
 (* Utilities
  ***********************************************************************)

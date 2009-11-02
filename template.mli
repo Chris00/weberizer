@@ -42,12 +42,16 @@ val subst : Binding.t -> html -> html
       @raise Invalid_argument if variable names are not valid or
       associated values do not correspond to their usage. *)
 
+val read : ?bindings:Binding.t -> string -> html
+  (** [read fname] reads the file [fname] and returns its content in a
+      structured form.
+
+      @param bindings if provided, perform the substitutions it
+      mandates.  Otherwise, the "raw" HTML is returned (this is the
+      default). *)
+
 
 (** {1 Utilities} *)
-
-val read_html : string -> html
-  (** [read_html fname] reads the file [fname] and returns its content
-      in a structured form. *)
 
 val write_html : html -> string -> unit
   (** [write_html html fname] writes the textual representation of the
