@@ -416,15 +416,17 @@ let compile ?module_name fname =
 module Binding =
 struct
   type data =
-    | String of string
     | Html of html
-    | Fun of (string list -> string) (* return HTML ? *)
+    | String of string
+    | Fun_html of (string list -> html)
+    | Fun of (string list -> string)
 
   type t = (string, data) Hashtbl.t
 
   let string b var s = Hashtbl.add b var (String s)
   let html b var h = Hashtbl.add b var (Html h)
-  let f b var g = Hashtbl.add b var (Fun g)
+  let fun_html b var f = Hashtbl.add b var (Fun_html f)
+  let fun_string b var f = Hashtbl.add b var (Fun f)
 
   exception Binding_not_found of string
 
@@ -434,60 +436,58 @@ struct
 
   exception Not_found = Binding_not_found
 
-  let subst_string b var =
-    match find b var with
-    | String s -> s
-    | Html _ -> invalid_arg(sprintf "A string is expected bur %S is bound \
-		to some HTML" var)
-    | Fun f -> f []
+  let fail_not_a_fun var =
+    invalid_arg(sprintf "%S is bound to a variable but used \
+		as a function in the HTML template" var)
 
-  let subst_html b var =
+  let subst_to_string b var args =
     match find b var with
-    | String s -> [Nethtml.Data s]
-    | Html h -> h
-    | Fun f -> [Nethtml.Data(f [])]
-
-  let subst_f b var args =
-    match find b var with
-    | String _ -> invalid_arg(sprintf "A function is expected bur %S is bound \
-		to some string" var)
-    | Html _ -> invalid_arg(sprintf "A function is expected bur %S is bound \
-		to some HTML" var)
+    | String s -> (match args with [] -> s | _ -> fail_not_a_fun var)
     | Fun f -> f args
+    | Html _ | Fun_html _ -> invalid_arg(sprintf "A string is expected but \
+		 %S returns HTML" var)
+
+  let subst_to_html b var args =
+    match find b var with
+    | String s -> (match args with
+                  | [] -> [Nethtml.Data s]
+                  | _ -> fail_not_a_fun var)
+    | Html h -> h
+    | Fun_html f -> f args
+    | Fun f -> [Nethtml.Data(f args)]
 end
 
 let subst_var b v =
   match split_on_spaces v with
   | [] | "" :: _ -> invalid_arg "Empty variables are not allowed"
-  | [v] ->
-      if valid_ocaml_id v then Binding.subst_string b v
-      else invalid_arg(sprintf "Variable %S is not a valid OCaml identifier" v)
   | v :: args ->
-      if valid_ocaml_id v then Binding.subst_f b v args
+      if valid_ocaml_id v then Binding.subst_to_string b v args
       else invalid_arg(sprintf "Function name %S is not valid" v)
 
 let subst_string bindings s =
-  let len_s = String.length s in
-  let buf = Buffer.create len_s in
+  let buf = Buffer.create 100 in
   let add_string _ s = Buffer.add_string buf s in
   let add_var _ v = Buffer.add_string buf (subst_var bindings v) in
-  parse_string_range add_string add_var () s 0 0 len_s;
+  parse_string_range add_string add_var () s 0 0 (String.length s);
   Buffer.contents buf
 
+let subst_html bindings s =
+  let add_string l s = Nethtml.Data s :: l in
+  let add_var l v = Nethtml.Data(subst_var bindings v) :: l in
+  List.rev(parse_string_range add_string add_var [] s 0 0 (String.length s))
 
 let rec subst_element bindings html = match html with
-  | Nethtml.Data s -> [Nethtml.Data(subst_string bindings s)]
+  | Nethtml.Data s -> subst_html bindings s
   | Nethtml.Element(el, args, content0) ->
       let ml = { content = "";  args = [];  strip = `No } in
       let args = split_args (subst_string bindings) ml [] args in
       if ml.content <> "" then
-        let content = Binding.subst_html bindings ml.content in
+        let content = Binding.subst_to_html bindings ml.content ml.args in
         match ml.strip with
         | `No -> [Nethtml.Element(el, args, content)]
         | `Yes -> content
-        | `If_empty ->
-            if content = [] then []
-            else [Nethtml.Element(el, args, content)]
+        | `If_empty -> (if content = [] then []
+                       else [Nethtml.Element(el, args, content)])
       else [Nethtml.Element(el, args, subst bindings content0)]
 
 and subst bindings html =

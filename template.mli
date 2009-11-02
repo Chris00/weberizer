@@ -26,8 +26,10 @@ sig
     (** [string b var s] add to the binding [var] -> [s] to [b]. *)
   val html : t -> string -> html -> unit
     (** [html b var h] add to the binding [var] -> [h] to [b]. *)
-  val f : t -> string -> (string list -> string) -> unit
-    (** [f b var g] add to the binding [var] -> [g] to [b]. *)
+  val fun_html : t -> string -> (string list -> html) -> unit
+    (** [fun_html b var f] add to the binding [var] -> [f] to [b]. *)
+  val fun_string : t -> string -> (string list -> string) -> unit
+    (** [fun_string b var f] add to the binding [var] -> [f] to [b]. *)
 end
 
 val subst : Binding.t -> html -> html
