@@ -1,3 +1,9 @@
+html {
+  /* Always show a vertical scroll-bar in firefox (à la IE) so the
+     100% width is always the same pixel width */
+  overflow-y: scroll;
+}
+
 body {
   padding: 20px;
   color: #000;
@@ -30,6 +36,7 @@ div.horizontal-line {
   float: left;
   margin: 0;
   padding: 0;
+  padding-bottom: 1ex;
   /* border: 1px dashed; */
 }
 
