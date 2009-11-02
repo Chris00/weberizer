@@ -375,7 +375,7 @@ let filter_default rel_dir f =
   Filename.check_suffix f ".html" || Filename.check_suffix f ".php"
 
 let iter_files ?(filter=filter_default) root f =
-  if Sys.is_directory root then iter_files_in_dir filter root "" f
+  if Sys.is_directory root then iter_files_in_dir filter root "." f
   else f (Filename.dirname root) (Filename.basename root)
 
 let rec revert_path p =
