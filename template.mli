@@ -22,6 +22,9 @@ sig
     (** [Not_found var] is raised if the variable [var] is not found
         in the binding. *)
 
+  val make : unit -> t
+  val copy : t -> t
+
   val string : t -> string -> string -> unit
     (** [string b var s] add to the binding [var] -> [s] to [b]. *)
   val html : t -> string -> html -> unit

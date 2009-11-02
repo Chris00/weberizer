@@ -423,6 +423,9 @@ struct
 
   type t = (string, data) Hashtbl.t
 
+  let make () = Hashtbl.create 20
+  let copy = Hashtbl.copy
+
   let string b var s = Hashtbl.add b var (String s)
   let html b var h = Hashtbl.add b var (Html h)
   let fun_html b var f = Hashtbl.add b var (Fun_html f)
