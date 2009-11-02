@@ -178,26 +178,6 @@ let parse_string h s =
   List.rev(parse_string_range add_string add_var [] s 0 0 (String.length s))
 
 
-let subst_var h v =
-  match split_on_spaces v with
-  | [] | "" :: _ -> invalid_arg "Empty variables are not allowed"
-  | [v] ->
-      if valid_ocaml_id v then (v)
-      else invalid_arg(sprintf "Variable %S is not a valid OCaml identifier" v)
-  | v :: args ->
-      if valid_ocaml_id v then (v)
-      else invalid_arg(sprintf "Function name %S is not valid" v)
-
-let subst_string h s =
-  let len_s = String.length s in
-  let buf = Buffer.create len_s in
-  let add_string _ s = Buffer.add_string buf s in
-  let add_var _ v = Buffer.add_string buf v in
-  parse_string_range add_string add_var () s 0 0 len_s;
-  Buffer.contents buf
-
-
-
 (* Parse Nethtml document : search variables
  ***********************************************************************)
 
@@ -221,7 +201,7 @@ let is_ocaml_arg s =
 (* [split_args h ml [] all] go through the arguments [all], record the
    "ml:*" arguments in [ml] and returns the other arguments.  These
    arguments possibly contain variables which will be recorded in [h]. *)
-let rec split_args h ml args all = match all with
+let rec split_args parse_string ml args all = match all with
   | [] -> args
   | (arg, v) :: tl ->
       if is_ocaml_arg arg then (
@@ -238,23 +218,23 @@ let rec split_args h ml args all = match all with
             if valid_ocaml_id v then (ml.content <- v; ml.strip <- `Yes)
             else failwith(sprintf "The variable name %S is not valid" v)
         end;
-        split_args h ml args tl
+        split_args parse_string ml args tl
       )
-      else split_args h ml ((arg, parse_string h v) :: args) tl
+      else split_args parse_string ml ((arg, parse_string v) :: args) tl
 
 let rec parse_element h html = match html with
   | Nethtml.Data(s) -> Data(parse_string h s)
   | Nethtml.Element(el, args, content) ->
       let ml = { content = "";  strip = `No } in
-      let args = split_args h ml [] args in
+      let args = split_args (parse_string h) ml [] args in
       if ml.content <> "" then (
         Var.add h ml.content Var.HTML;
         Content(el, args, ml.strip, ml.content)
       )
       else
-        Element(el, args, parse h content)
+        Element(el, args, parse_html h content)
 
-and parse h html = List.map (parse_element h) html
+and parse_html h html = List.map (parse_element h) html
 
 
 (* Output to a static module
@@ -342,7 +322,7 @@ let compile ?module_name fname =
   let tpl = read_html fname in
   (* Parse *)
   let h = Var.make() in
-  let tpl = parse h tpl in
+  let tpl = parse_html h tpl in
   (* Output implementation *)
   let fh = open_out (module_name ^ ".ml") in
   let fm = formatter_of_out_channel fh in
@@ -381,6 +361,91 @@ let compile ?module_name fname =
   end;
   fprintf fm "@?"; (* flush *)
   close_out fh
+
+
+(* Parsing with direct substitution
+ ***********************************************************************)
+
+module Binding =
+struct
+  type data =
+    | String of string
+    | Html of html
+    | Fun of (string list -> string) (* return HTML ? *)
+
+  type t = (string, data) Hashtbl.t
+
+  let string b var s = Hashtbl.add b var (String s)
+  let html b var h = Hashtbl.add b var (Html h)
+  let f b var g = Hashtbl.add b var (Fun g)
+
+  exception Binding_not_found of string
+
+  let find b var =
+    try Hashtbl.find b var
+    with Not_found -> raise(Binding_not_found var)
+
+  exception Not_found = Binding_not_found
+
+  let subst_string b var =
+    match find b var with
+    | String s -> s
+    | Html _ -> invalid_arg(sprintf "A string is expected bur %S is bound \
+		to some HTML" var)
+    | Fun f -> f []
+
+  let subst_html b var =
+    match find b var with
+    | String s -> [Nethtml.Data s]
+    | Html h -> h
+    | Fun f -> [Nethtml.Data(f [])]
+
+  let subst_f b var args =
+    match find b var with
+    | String _ -> invalid_arg(sprintf "A function is expected bur %S is bound \
+		to some string" var)
+    | Html _ -> invalid_arg(sprintf "A function is expected bur %S is bound \
+		to some HTML" var)
+    | Fun f -> f args
+end
+
+let subst_var b v =
+  match split_on_spaces v with
+  | [] | "" :: _ -> invalid_arg "Empty variables are not allowed"
+  | [v] ->
+      if valid_ocaml_id v then Binding.subst_string b v
+      else invalid_arg(sprintf "Variable %S is not a valid OCaml identifier" v)
+  | v :: args ->
+      if valid_ocaml_id v then Binding.subst_f b v args
+      else invalid_arg(sprintf "Function name %S is not valid" v)
+
+let subst_string bindings s =
+  let len_s = String.length s in
+  let buf = Buffer.create len_s in
+  let add_string _ s = Buffer.add_string buf s in
+  let add_var _ v = Buffer.add_string buf (subst_var bindings v) in
+  parse_string_range add_string add_var () s 0 0 len_s;
+  Buffer.contents buf
+
+
+let rec parse_element bindings html = match html with
+  | Nethtml.Data s -> [Nethtml.Data(subst_string bindings s)]
+  | Nethtml.Element(el, args, content0) ->
+      let ml = { content = "";  strip = `No } in
+      let args = split_args (subst_string bindings) ml [] args in
+      if ml.content <> "" then
+        let content = Binding.subst_html bindings ml.content in
+        match ml.strip with
+        | `No -> [Nethtml.Element(el, args, content)]
+        | `Yes -> content
+        | `If_empty ->
+            if content = [] then []
+            else [Nethtml.Element(el, args, content)]
+      else [Nethtml.Element(el, args, subst bindings content0)]
+
+and subst bindings html =
+  List.concat(List.map (parse_element bindings) html)
+
 
 
 (* Utilities

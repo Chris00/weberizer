@@ -12,6 +12,31 @@ val compile : ?module_name:string -> string -> unit
       @param module_name the name of the generated module.  By
       default, it is the basename of [fname] without extension. *)
 
+module Binding :
+sig
+  type t
+    (** Mutable value holding a correspondence of a variable name to
+        its value. *)
+
+  exception Not_found of string
+    (** [Not_found var] is raised if the variable [var] is not found
+        in the binding. *)
+
+  val string : t -> string -> string -> unit
+    (** [string b var s] add to the binding [var] -> [s] to [b]. *)
+  val html : t -> string -> html -> unit
+    (** [html b var h] add to the binding [var] -> [h] to [b]. *)
+  val f : t -> string -> (string list -> string) -> unit
+    (** [f b var g] add to the binding [var] -> [g] to [b]. *)
+end
+
+val subst : Binding.t -> html -> html
+  (** [subst b html] return [html] where all variables are substituted
+      according to the bindings [b]
+
+      @raise Invalid_argument if variable names are not valid or
+      associated values do not correspond to their usage. *)
+
 
 (** {1 Utilities} *)
 
