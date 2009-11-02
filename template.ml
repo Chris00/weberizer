@@ -57,6 +57,24 @@ and get_quoted_string s i0 i len =
     v :: get_split_string s i i len
   else get_quoted_string s i0 (i + 1) len
 
+let rec index_nospace s i =
+  if i >= String.length s then i
+  else if is_space s.[i] then index_nospace s (i+1)
+  else i
+
+let rec index_last_nospace s i0 i =
+  if i < i0 then i
+  else if is_space s.[i] then index_last_nospace s i0 (i - 1)
+  else i
+
+let strip_spaces s =
+  let i_last = String.length s - 1 in
+  let i0 = index_nospace s 0 in
+  let i1 = index_last_nospace s i0 i_last in
+  if i0 = 0 && i1 = i_last then s
+  else String.sub s i0 (i1 - i0 + 1)
+
+
 (* Parse strings
  *************************************************************************)
 
@@ -185,6 +203,7 @@ let rec split_args h ml args all = match all with
             if valid_ocaml_id v then ml.content <- v
             else failwith(sprintf "The variable name %S is not valid" v)
           else if a = "strip" then
+            let v = strip_spaces v in
             ml.strip <- (if v = "ifempty" || v = "if empty" then `If_empty
                         else `Yes)
           else if a = "replace" then
@@ -280,8 +299,6 @@ and write_rendering_node fm h tpl = match tpl with
           write_args fm args;
           fprintf fm ",@ %s)]@])@]@ @@ [" (Var.to_html h var)
 ;;
-
-(* FIXME: Clean "style" args? *)
 
 let read_html fname =
   let fh = open_in fname in
