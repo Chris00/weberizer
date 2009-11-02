@@ -391,5 +391,7 @@ tr.even a:hover {
 tr.even td {
   padding-top: 0.3ex;
   padding-bottom: 0.5ex;
+  padding-left: 0.4ex;
+  padding-right: 0.3ex;
 }
 
