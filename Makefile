@@ -2,6 +2,7 @@ SCP = scp -C -p
 TARBALL=/tmp/umons.tar.gz
 WEB=w3.umh.ac.be:~/html/umons/template
 
+OCAMLC_FLAGS = -g -dtypes
 OCAMLPACKS = netstring,unix
 GENERATED_PATT = UMONS.%
 

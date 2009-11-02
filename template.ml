@@ -84,12 +84,19 @@ let strip_spaces s =
 module Var =
 struct
   (* Type of variables in HTML templates. *)
-  type ty = HTML | String | Fun
+  type ty = HTML | String | Fun_html | Fun
 
   let type_to_string = function
     | HTML -> "html"
     | String -> "string"
-    | Fun -> "string list -> string"
+    | Fun_html -> "fun_html"
+    | Fun -> "fun"
+
+  let type_code = function
+    | HTML -> "html"
+    | String -> "string"
+    | Fun_html -> "(string list -> html)"
+    | Fun -> "(string list -> string)"
 
   (* Characteristics of a variable *)
   type t = { mutable ty: ty;             (* var type *)
@@ -101,15 +108,36 @@ struct
   let make () = (Hashtbl.create 10 : set)
   let ty h v = (Hashtbl.find h v).ty
 
-  let to_html h v = match ty h v with
-    | HTML -> "t." ^ v
-    | String -> "[Nethtml.Data(t." ^ v ^ ")]"
-    | Fun -> assert false (* funs are only in strings *)
+  let write_code_eval fm v args =
+    fprintf fm "(t.%s [" v;
+    List.iter (fun a -> fprintf fm "%S;" a) args;
+    fprintf fm "])"
 
-  let is_empty_code h v = match ty h v with
-    | HTML -> "t." ^ v ^ " = []"
-    | String -> "t." ^ v ^ " = \"\""
-    | Fun -> assert false (* funs are only in strings *)
+  let write_code_html fm h v args = match ty h v with
+    | HTML -> fprintf fm "t.%s" v
+    | String -> fprintf fm "[Nethtml.Data(t.%s)]" v
+    | Fun_html -> write_code_eval fm v args;
+    | Fun ->
+        fprintf fm "[Nethtml.Data(";
+        write_code_eval fm v args;
+        fprintf fm ")]"
+
+  let write_code_empty fm h v = match ty h v with
+    | HTML | Fun_html -> fprintf fm "[]"
+    | String | Fun -> fprintf fm "\"\""
+
+  (* Write a binding if needed to avoid multiple evaluations of a function.
+     @return the variable name to use. *)
+  let binding_no = ref 0
+  let write_binding fm h v args = match ty h v with
+    | HTML | String -> "t." ^ v
+    | Fun_html | Fun ->
+        incr binding_no;
+        let n = !binding_no in
+        fprintf fm "let ocaml_template__%i = " n;
+        write_code_eval fm v args;
+        fprintf fm " in@\n";
+        "ocaml_template__" ^ string_of_int n
 
   (* Add a new variable.  In case of conflicting types, use the
      "lower" type compatible with both. *)
@@ -117,11 +145,12 @@ struct
     try
       let v' = Hashtbl.find h v in
       match v'.ty, ty with
-      | (HTML | String), Fun | Fun, (HTML | String) ->
+      | (HTML | String), (Fun_html | Fun) | (Fun_html | Fun), (HTML | String) ->
           failwith(sprintf "The identifier %S cannot be used both as a \
 		variable and a function" v)
       | HTML, String | String, HTML -> v'.ty <- String
-      | HTML, HTML | String, String | Fun, Fun -> ()
+      | Fun_html, Fun | Fun, Fun_html -> v'.ty <- Fun
+      | HTML, HTML | String, String | Fun_html, Fun_html | Fun, Fun -> ()
     with Not_found ->
       Hashtbl.add h v { ty = ty }
 
@@ -189,12 +218,14 @@ type strip = [ `No | `Yes | `If_empty ]
 type document =
   | Element of string * (string * subst_string) list * document list
   | Data of subst_string
-  | Content of string * (string * subst_string) list * strip * string
-      (* Content(el, args, strip default, var) : content replacement *)
+  | Content of string * (string * subst_string) list
+      * strip * string * string list
+      (* Content(el, args, strip default, var, args) : content replacement *)
 
 (* Accumulator keeping given OCaml arguments *)
 type ocaml_args = {
   mutable content: string; (* var name or "" *)
+  mutable args: string list; (* possible function arguments *)
   mutable strip: strip;
 }
 
@@ -211,15 +242,19 @@ let rec split_args parse_string ml args all = match all with
         begin
           let a = String.sub arg 3 (String.length arg - 3) in
           if a = "content" then
-            if valid_ocaml_id v then ml.content <- v
-            else failwith(sprintf "The variable name %S is not valid" v)
+            match split_on_spaces v with
+            | v :: args when valid_ocaml_id v ->
+                ml.content <- v;  ml.args <- args
+            | _ -> failwith(sprintf "The variable name %S is not valid" v)
           else if a = "strip" then
             let v = strip_spaces v in
             ml.strip <- (if v = "ifempty" || v = "if empty" then `If_empty
                         else `Yes)
           else if a = "replace" then
-            if valid_ocaml_id v then (ml.content <- v; ml.strip <- `Yes)
-            else failwith(sprintf "The variable name %S is not valid" v)
+            match split_on_spaces v with
+            | v :: args when valid_ocaml_id v ->
+                ml.content <- v;  ml.args <- args;  ml.strip <- `Yes
+            | _ -> failwith(sprintf "The variable name %S is not valid" v)
         end;
         split_args parse_string ml args tl
       )
@@ -228,11 +263,11 @@ let rec split_args parse_string ml args all = match all with
 let rec parse_element h html = match html with
   | Nethtml.Data(s) -> Data(parse_string h s)
   | Nethtml.Element(el, args, content) ->
-      let ml = { content = "";  strip = `No } in
+      let ml = { content = "";  args = [];  strip = `No } in
       let args = split_args (parse_string h) ml [] args in
       if ml.content <> "" then (
-        Var.add h ml.content Var.HTML;
-        Content(el, args, ml.strip, ml.content)
+        Var.add h ml.content (if ml.args = [] then Var.HTML else Var.Fun_html);
+        Content(el, args, ml.strip, ml.content, ml.args)
       )
       else
         Element(el, args, parse_html h content)
@@ -293,7 +328,7 @@ and write_rendering_node fm h tpl = match tpl with
       fprintf fm ",@ ";
       write_rendering_list fm h content;
       fprintf fm ");@]@ "
-  | Content(el, args, strip, var) ->
+  | Content(el, args, strip, var, fun_args) ->
       (* We are writing a list.  If this must be removed, concatenate
          with left and right lists.  FIXME: this is not ideal and
          maybe one must move away from Nethtml representation? *)
@@ -301,14 +336,21 @@ and write_rendering_node fm h tpl = match tpl with
       | `No ->
           fprintf fm "@[<2>Nethtml.Element(%S,@ " el;
           write_args fm args;
-          fprintf fm ",@ %s);@]@ " (Var.to_html h var)
+          fprintf fm ",@ ";
+          Var.write_code_html fm h var fun_args;
+          fprintf fm ");@]@ "
       | `Yes ->
-          fprintf fm "]@ @@ %s@ @@ [" (Var.to_html h var)
+          fprintf fm "]@ @@ ";
+          Var.write_code_html fm h var fun_args;
+          fprintf fm "@ @@ ["
       | `If_empty ->
-          fprintf fm "]@ @@ @[<1>(if %s then []@ \
-	    else @[<2>[Nethtml.Element(%S,@ " (Var.is_empty_code h var) el;
+          fprintf fm "]@ @@ @[<1>(";
+          let bound_var = Var.write_binding fm h var fun_args in
+          fprintf fm "if %s = " bound_var;
+          Var.write_code_empty fm h var;
+          fprintf fm " then []@ else @[<2>[Nethtml.Element(%S,@ " el;
           write_args fm args;
-          fprintf fm ",@ %s)]@])@]@ @@ [" (Var.to_html h var)
+          fprintf fm ",@ %s)]@])@]@ @@ [" bound_var
 ;;
 
 let read_html fname =
@@ -333,11 +375,13 @@ let compile ?module_name fname =
   fprintf fm "type html = Nethtml.document list\n\n";
   fprintf fm "type t = {\n";
   Var.iter h (fun v t ->
-                fprintf fm "  %s: %s;\n" v (Var.type_to_string t.Var.ty);
+                fprintf fm "  %s: %s;\n" v (Var.type_code t.Var.ty);
              );
   fprintf fm "}\n\n";
+  (* See [Var.type_to_string] for the names: *)
   fprintf fm "let default_html = []\n";
   fprintf fm "let default_string = \"\"\n";
+  fprintf fm "let default_fun_html _ = []\n";
   fprintf fm "let default_fun _ = ()\n";
   fprintf fm "let empty = {\n";
   Var.iter h begin fun v t ->
@@ -360,7 +404,7 @@ let compile ?module_name fname =
   fprintf fm "val render : t -> html@\n";
   fprintf fm "  (** Renders the template as an HTML document. *)\n\n";
   Var.iter_ab h begin fun v t ->
-    fprintf fm "val %s : t -> %s -> t\n" v (Var.type_to_string t.Var.ty)
+    fprintf fm "val %s : t -> %s -> t\n" v (Var.type_code t.Var.ty)
   end;
   fprintf fm "@?"; (* flush *)
   close_out fh
@@ -431,10 +475,10 @@ let subst_string bindings s =
   Buffer.contents buf
 
 
-let rec parse_element bindings html = match html with
+let rec subst_element bindings html = match html with
   | Nethtml.Data s -> [Nethtml.Data(subst_string bindings s)]
   | Nethtml.Element(el, args, content0) ->
-      let ml = { content = "";  strip = `No } in
+      let ml = { content = "";  args = [];  strip = `No } in
       let args = split_args (subst_string bindings) ml [] args in
       if ml.content <> "" then
         let content = Binding.subst_html bindings ml.content in
@@ -447,7 +491,7 @@ let rec parse_element bindings html = match html with
       else [Nethtml.Element(el, args, subst bindings content0)]
 
 and subst bindings html =
-  List.concat(List.map (parse_element bindings) html)
+  List.concat(List.map (subst_element bindings) html)
 
 
 
