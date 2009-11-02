@@ -431,13 +431,12 @@ struct
   let fun_html b var f = Hashtbl.add b var (Fun_html f)
   let fun_string b var f = Hashtbl.add b var (Fun f)
 
-  exception Binding_not_found of string
+  exception Std_Not_found = Not_found
+  exception Not_found of string
 
   let find b var =
     try Hashtbl.find b var
-    with Not_found -> raise(Binding_not_found var)
-
-  exception Not_found = Binding_not_found
+    with Std_Not_found -> raise(Not_found var)
 
   let fail_not_a_fun var =
     invalid_arg(sprintf "%S is bound to a variable but used \
