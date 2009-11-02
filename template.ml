@@ -39,7 +39,10 @@ let rec skip_spaces s i len =
 (* Split the string [s] at spaces (one or several contiguous spaces).
    The way to have a block with spaces or an empty argument is to
    quote it with double quotes. *)
-let rec split_on_spaces s = get_split_string s 0 0 (String.length s)
+let rec split_on_spaces s =
+  let len = String.length s in
+  let i = skip_spaces s 0 len in
+  get_split_string s i i len
 and get_split_string s i0 i len =
   if i >= len then
     if i0 >= len then [] else [String.sub s i0 (len - i0)]
