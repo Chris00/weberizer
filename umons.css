@@ -113,6 +113,7 @@ div.umons-menu {
 .umons-menu li {
   /* make the list elements a containing block for the nested lists */
   position: relative;
+  padding-top:0ex
 }
 
 .umons-menu ul ul ul {
@@ -290,6 +291,9 @@ ul ul {
   list-style: circle;
 }
 
+li {
+    padding-top: 0.2ex;
+}
 a {
   color: rgb(0, 171, 204);
   text-decoration: none;
@@ -392,11 +396,11 @@ blockquote {
 
 /* Table */
 tr.even {
-  background-color: #ededed;
+  background-color: #e0e0e0;
 }
 
 tr.even a:hover {
-  background-color: #FFF;
+/*  background-color: #FFF;*/
 }
 
 tr.even td {
