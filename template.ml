@@ -77,6 +77,13 @@ let strip_spaces s =
   if i0 = 0 && i1 = i_last then s
   else String.sub s i0 (i1 - i0 + 1)
 
+let rec is_prefix_loop p s i len_p =
+  i >= len_p || (p.[i] = s.[i] && is_prefix_loop p s (i + 1) len_p)
+
+let is_prefix p s =
+  let len_p = String.length p in
+  len_p <= String.length s  &&  is_prefix_loop p s 0 len_p
+
 
 (* Parse strings
  *************************************************************************)
@@ -548,25 +555,83 @@ let rec revert_path p =
   if dir = "." then (if Filename.basename p = "." then "" else "../")
   else Filename.concat ".." (revert_path dir)
 
-let email e =
+let quote_quot_re = Str.regexp_string "\"";;
+let arg_to_string (a,v) =
+  let v = Str.global_replace quote_quot_re "&quot;" v in
+  a ^ "=\"" ^ v ^ "\""
+
+let email ?(args=[]) ?content e =
   let at = String.index e '@' in
   let local_part = String.sub e 0 at in
   let at = at + 1 in
-  let host = String.sub e at (String.length e - at) in
-  [Nethtml.Element("script", ["type", "text/javascript"],
-                   [Nethtml.Data(Printf.sprintf "<!--
-                     local = %S\n\
-                     document.write('<a href=\"mailto:' + local + '@%s\">' \
-                     + local + '@%s</a>')\n\
-                     //-->" local_part host host)
-                   ]);
-   Nethtml.Element("noscript", [],
-                   [Nethtml.Data(local_part);
+  let host_query = String.sub e at (String.length e - at) in
+  let host = (try String.sub host_query 0 (String.index host_query '?')
+              with Not_found -> host_query) in
+  let args = String.concat " " (List.map arg_to_string args) in
+  let javascript = match content with
+    | None -> Printf.sprintf "document.write('<a href=\"mailto:' + local \
+	 + '@%s\" %s>' + local + '@%s</a>')" host_query args host
+    | Some c ->
+        let buf = Buffer.create 100 in
+        let ch = new Netchannels.output_buffer buf in
+        Nethtml.write ch c;
+        ch#close_out();
+        Printf.sprintf "document.write('<a href=\"mailto:' + local \
+	  + '@%s\" %s>%s</a>')" host_query args (Buffer.contents buf) in
+  let noscript = match content with
+    | None -> [Nethtml.Data(local_part);
+              Nethtml.Element("abbr", ["title", "(at) -> @"],
+                              [Nethtml.Data "(at)"]);
+              Nethtml.Data host]
+    | Some c -> c @ [Nethtml.Data " &#9001;";
+                    Nethtml.Data(local_part);
                     Nethtml.Element("abbr", ["title", "(at) -> @"],
                                     [Nethtml.Data "(at)"]);
-                    Nethtml.Data host])
-  ]
+                    Nethtml.Data host;
+                    Nethtml.Data "&#9002;" ] in
+  [Nethtml.Element("script", ["type", "text/javascript"],
+                   [Nethtml.Data(Printf.sprintf "<!--;\n\
+                     local = %S\n%s\n//-->" local_part javascript) ]);
+   Nethtml.Element("noscript", [], noscript) ]
 
+let is_email (a, e) =
+  a = "href"
+  && String.length e > 7 && e.[0] = 'm' && e.[1] = 'a' && e.[2] = 'i'
+  && e.[3] = 'l' && e.[4] = 't' && e.[5] = 'o' && e.[6] = ':'
+
+(* Concatenate all Data in [l].  If another node is present, raise [Failure]. *)
+let concat_content_data l =
+  let l = List.map (function
+                    | Nethtml.Data s -> s
+                    | Nethtml.Element _ -> failwith "concat_content_data") l in
+  String.concat "" l
+
+(* Check whether the content of the link is the link mail address. *)
+let content_is_email txt email =
+  let len_txt = String.length txt in
+  is_prefix txt email
+  && (len_txt = String.length email || email.[len_txt] = '?')
+
+let rec protect_emails html =
+  List.concat(List.map protect_emails_element html)
+and protect_emails_element = function
+  | Nethtml.Data _ as e -> [e] (* emails in text are not modified *)
+  | Nethtml.Element("a", args, content) as e ->
+      let emails, args = List.partition is_email args in
+      (match emails with
+       | [] -> [e]
+       | [(_, addr)] ->
+           let addr = String.sub addr 7 (String.length addr - 7) in
+           let content =
+             try
+               let txt = concat_content_data content in
+               if content_is_email txt addr then None else Some content
+             with Failure _ -> None in
+           email ~args ?content addr
+       | _ -> failwith("Several email addesses not allowed"
+                      ^ String.concat ", " (List.map snd emails)))
+  | Nethtml.Element(el, args, content) ->
+      [Nethtml.Element(el, args, protect_emails content)]
 
 let is_href (a, _) = a = "href"
 
