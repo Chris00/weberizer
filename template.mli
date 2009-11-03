@@ -12,12 +12,46 @@ val compile : ?module_name:string -> string -> unit
       @param module_name the name of the generated module.  By
       default, it is the basename of [fname] without extension. *)
 
+module Binding :
+sig
+  type t
+    (** Mutable value holding a correspondence of a variable name to
+        its value. *)
+
+  exception Not_found of string
+    (** [Not_found var] is raised if the variable [var] is not found
+        in the binding. *)
+
+  val make : unit -> t
+  val copy : t -> t
+
+  val string : t -> string -> string -> unit
+    (** [string b var s] add to the binding [var] -> [s] to [b]. *)
+  val html : t -> string -> html -> unit
+    (** [html b var h] add to the binding [var] -> [h] to [b]. *)
+  val fun_html : t -> string -> (string list -> html) -> unit
+    (** [fun_html b var f] add to the binding [var] -> [f] to [b]. *)
+  val fun_string : t -> string -> (string list -> string) -> unit
+    (** [fun_string b var f] add to the binding [var] -> [f] to [b]. *)
+end
+
+val subst : Binding.t -> html -> html
+  (** [subst b html] return [html] where all variables are substituted
+      according to the bindings [b]
+
+      @raise Invalid_argument if variable names are not valid or
+      associated values do not correspond to their usage. *)
+
+val read : ?bindings:Binding.t -> string -> html
+  (** [read fname] reads the file [fname] and returns its content in a
+      structured form.
+
+      @param bindings if provided, perform the substitutions it
+      mandates.  Otherwise, the "raw" HTML is returned (this is the
+      default). *)
+
 
 (** {1 Utilities} *)
-
-val read_html : string -> html
-  (** [read_html fname] reads the file [fname] and returns its content
-      in a structured form. *)
 
 val write_html : html -> string -> unit
   (** [write_html html fname] writes the textual representation of the
