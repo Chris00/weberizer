@@ -80,10 +80,21 @@ val revert_path : string -> string
       followed by cd [q] is equivalent to staying in the current
       directory (assuming [p] exists). *)
 
-val email : string -> html
+val email : ?args:(string * string) list -> ?content:html -> string -> html
   (** [email e] return some HTML/javascript code to protect the email
-      [e] from SPAM harvesters. *)
+      [e] from SPAM harvesters.  The email [e] may end with "?..." in
+      order to specify options, e.g. [?subject=...].
+
+      @param args arguments to the <a> HTML tag.  Default: [[]].
+
+      @param content Tells whether the content of the email link is
+      the email itself (no [content] specified, the default) or some
+      other data. *)
 
 val apply_relative_url : Neturl.url -> html -> html
   (** [apply_relative_url base html] prefix all relative URLs in
       [html] by [base]. *)
+
+val protect_emails : html -> html
+  (** [protect_emails html] changes all emails hrefs in [html] in
+      order to make it more difficult for spammers to harvest them. *)

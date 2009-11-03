@@ -283,7 +283,8 @@ h4 {
 
 ul {
   list-style: square;
-  margin-top: 2px;
+  padding-top: 0;
+  margin-top: 0px;
   padding-left: 1.5em;
 }
 
@@ -292,8 +293,9 @@ ul ul {
 }
 
 li {
-    padding-top: 0.2ex;
+  padding-top: 0.2ex;
 }
+
 a {
   color: rgb(0, 171, 204);
   text-decoration: none;
@@ -397,10 +399,6 @@ blockquote {
 /* Table */
 tr.even {
   background-color: #d8d8d8;
-}
-
-tr.even a:hover {
-/*  background-color: #FFF;*/
 }
 
 tr.even td {

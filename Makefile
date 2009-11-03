@@ -3,7 +3,7 @@ TARBALL=/tmp/umons.tar.gz
 WEB=w3.umh.ac.be:~/html/umons/template
 
 OCAMLC_FLAGS = -g -dtypes
-OCAMLPACKS = netstring,unix
+OCAMLPACKS = netstring,unix,str
 GENERATED_PATT = UMONS.%
 
 .PHONY: all byte native
