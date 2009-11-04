@@ -66,8 +66,17 @@
 		><img src="${url_base}images/gosearch.gif" alt="Search"></button>
       </form>
       <span class="banner">
-	<a href="http://${web_host}"
+	<a href="http://${web_host}/institut/${lang}"
 	   ><img src="${url_base}images/${banner}" alt="${title}"/></a>
+      </span>
+      <span class="navigation-bar">
+	<a href="http://www.umons.ac.be/${lang}">UMONS</a><span class="separation"
+	><img src="${url_base}images/right_arrow.png" /></span
+        ><a href="http://portail.umons.ac.be/${lang}/universite/facultes/fs/"
+	   >Faculté des sciences</a><span class="separation"
+	><img src="${url_base}images/right_arrow.png" /></span
+        ><a href="http://${web_host}/institut/${lang}">${title}</a
+        ><span ml:replace="navigation_bar">other links</span>
       </span>
 
       <div id="main">
