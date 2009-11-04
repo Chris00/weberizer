@@ -367,7 +367,7 @@ let read_html fname =
   close_in fh;
   tpl
 
-let compile ?module_name fname =
+let compile ?trailer_ml ?trailer_mli ?(hide=[]) ?module_name fname =
   let module_name = match module_name with
     | None -> (try Filename.chop_extension fname with _ -> fname)
     | Some n -> n (* FIXME: check valid module name *) in
@@ -399,6 +399,12 @@ let compile ?module_name fname =
                 fprintf fm "let %s t v = { t with %s = v }\n" v v
              );
   write_rendering_fun fm h tpl;
+  begin match trailer_ml with
+  | None -> ()
+  | Some txt ->
+      fprintf fm "(* ---------- Trailer -------------------- *)\n%s" txt
+  end;
+  fprintf fm "@?"; (* flush *)
   close_out fh;
   (* Output interface *)
   let fh = open_out (module_name ^ ".mli") in
@@ -411,7 +417,12 @@ let compile ?module_name fname =
   fprintf fm "val render : t -> html@\n";
   fprintf fm "  (** Renders the template as an HTML document. *)\n\n";
   Var.iter_ab h begin fun v t ->
-    fprintf fm "val %s : t -> %s -> t\n" v (Var.type_code t.Var.ty)
+    if not(List.mem v hide) then
+      fprintf fm "val %s : t -> %s -> t\n" v (Var.type_code t.Var.ty)
+  end;
+  begin match trailer_mli with
+  | None -> ()
+  | Some txt -> fprintf fm "\n\n%s" txt
   end;
   fprintf fm "@?"; (* flush *)
   close_out fh

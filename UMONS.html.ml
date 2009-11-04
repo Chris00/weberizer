@@ -14,4 +14,4 @@ let rec add_separation sep l = match l with
 
 let navigation_bar tpl ~url_base items =
   let sep = separation ~url_base in
-  UMONS.navigation_bar tpl (add_separation sep items)
+  navigation_bar tpl (add_separation sep items)

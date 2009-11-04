@@ -3,14 +3,21 @@
 
 type html = Nethtml.document list
 
-val compile : ?module_name:string -> string -> unit
+val compile : ?trailer_ml:string -> ?trailer_mli:string -> ?hide:string list ->
+  ?module_name:string -> string -> unit
   (** [compile fname] reads the HTML template file [fname] and creates
       an OCaml module with functions to fill the variables of the
       template.  The module will be in files [module_name].ml and
       [module_name].mli.
 
       @param module_name the name of the generated module.  By
-      default, it is the basename of [fname] without extension. *)
+      default, it is the basename of [fname] without extension.
+
+      @param trailer_ml additional code to be appended to the .ml file.
+      @param trailer_mli additional code to be appended to the .mli file.
+      @param hide variables of the template that will not be present
+      in the module interface.  This is only interesting if these
+      variables are used in [trailer_ml] functions. *)
 
 module Binding :
 sig

@@ -8,15 +8,13 @@ GENERATED_PATT = UMONS.%
 
 .PHONY: all byte native
 all: byte native
-byte: UMONS.cma template.cma UMONS_utils.cma
-native: UMONS.cmxa template.cmxa UMONS_utils.cmxa
+byte: UMONS.cma template.cma
+native: UMONS.cmxa template.cmxa
 
 UMONS.cma: UMONS.cmo
 UMONS.cmxa: UMONS.cmx
-UMONS_utils.cma: UMONS_utils.cmo
-UMONS_utils.cmxa: UMONS_utils.cmx
 
-UMONS.ml UMONS.mli: compile.exe UMONS.html
+UMONS.ml UMONS.mli: compile.exe UMONS.html UMONS.html.ml UMONS.html.mli
 	./$< UMONS.html
 
 compile.exe: template.cma
