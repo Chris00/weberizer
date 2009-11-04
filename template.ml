@@ -560,6 +560,10 @@ let arg_to_string (a,v) =
   let v = Str.global_replace quote_quot_re "&quot;" v in
   a ^ "=\"" ^ v ^ "\""
 
+
+(* The web page
+   'http://www.htmlhelp.com/tools/validator/problems.html' advises not to
+   put closing balises into scripts.*)
 let email ?(args=[]) ?content e =
   let at = String.index e '@' in
   let local_part = String.sub e 0 at in
@@ -570,14 +574,14 @@ let email ?(args=[]) ?content e =
   let args = String.concat " " (List.map arg_to_string args) in
   let javascript = match content with
     | None -> Printf.sprintf "document.write('<a href=\"mailto:' + local \
-	 + '@%s\" %s>' + local + '@%s</a>')" host_query args host
+	 + '@%s\" %s>' + local + '@%s<\ /a>')" host_query args host
     | Some c ->
         let buf = Buffer.create 100 in
         let ch = new Netchannels.output_buffer buf in
         Nethtml.write ch c;
         ch#close_out();
         Printf.sprintf "document.write('<a href=\"mailto:' + local \
-	  + '@%s\" %s>%s</a>')" host_query args (Buffer.contents buf) in
+	  + '@%s\" %s>%s<\ /a>')" host_query args (Buffer.contents buf) in
   let noscript = match content with
     | None -> [Nethtml.Data(local_part);
               Nethtml.Element("abbr", ["title", "(at) -> @"],

@@ -1,2 +1,4 @@
 
 - Check browser comatibility  http://browsershots.org/
+- Balises in the 'head' of HTML code don't close; this makes as
+  consequence invalid HTML pages.
