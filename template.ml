@@ -628,7 +628,7 @@ and protect_emails_element = function
                if content_is_email txt addr then None else Some content
              with Failure _ -> None in
            email ~args ?content addr
-       | _ -> failwith("Several email addesses not allowed"
+       | _ -> failwith("Several email addresses not allowed"
                       ^ String.concat ", " (List.map snd emails)))
   | Nethtml.Element(el, args, content) ->
       [Nethtml.Element(el, args, protect_emails content)]
