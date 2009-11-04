@@ -1,2 +1,8 @@
+- Check browser compatibility  http://browsershots.org/
+- Balises in the 'head' of HTML code don't close; this makes as
+  consequence invalid HTML pages.
+- </a> markups in scripts must be splitted in order not to be
+  recognized as closing markups. The page 
+  http://www.htmlhelp.com/tools/validator/problems.html advises to put
+  a space; the presented code does not work here.
 
-- Check browser comatibility  http://browsershots.org/
