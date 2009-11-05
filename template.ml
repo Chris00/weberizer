@@ -367,7 +367,7 @@ let read_html fname =
   close_in fh;
   tpl
 
-let compile ?trailer_ml ?trailer_mli ?(hide=[]) ?module_name fname =
+let compile_html ?trailer_ml ?trailer_mli ?(hide=[]) ?module_name fname =
   let module_name = match module_name with
     | None -> (try Filename.chop_extension fname with _ -> fname)
     | Some n -> n (* FIXME: check valid module name *) in
@@ -426,6 +426,52 @@ let compile ?trailer_ml ?trailer_mli ?(hide=[]) ?module_name fname =
   end;
   fprintf fm "@?"; (* flush *)
   close_out fh
+
+
+(* Compile an HTML file, possibly with some extra code in .html.ml
+ *************************************************************************)
+
+let content_of_file file =
+  let fh = open_in file in
+  let buf = Buffer.create 500 in
+  try
+    while true do
+      Buffer.add_string buf (input_line fh);
+      Buffer.add_char buf '\n'
+    done;
+    assert false
+  with End_of_file ->
+    close_in fh;
+    Buffer.contents buf
+
+(* Return the content of [file] if it exists or [None] otherwise. *)
+let maybe_content file =
+  if Sys.file_exists file then Some(content_of_file file) else None
+
+(* Looks for variable names to hide in the mli, declared with "@hide
+   var" or "@replace var". *)
+let hide_re = Str.regexp "(\\* *@hide +\\([a-zA-Z_]+\\) *\\*) *\n?"
+let vars_to_hide mli =
+  match mli with
+  | None -> [], mli
+  | Some mli ->
+      let i = ref 0 in
+      let acc = ref [] in
+      try
+        while true do
+          i := Str.search_forward hide_re mli !i;
+          acc := Str.matched_group 1 mli :: !acc;
+          incr i;
+        done;
+        assert false
+      with Not_found ->
+        !acc, Some(Str.global_replace hide_re "" mli)
+
+let compile f =
+  let trailer_ml = maybe_content (f ^ ".ml") in
+  let trailer_mli = maybe_content (f ^ ".mli") in
+  let hide, trailer_mli = vars_to_hide trailer_mli in
+  compile_html ?trailer_ml ?trailer_mli ~hide f
 
 
 (* Parsing with direct substitution
