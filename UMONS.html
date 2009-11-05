@@ -24,9 +24,9 @@
     </div>
     <div id="menucol">
       <!-- Conditionally include UMONS+txt.svg if the browser supports it? -->
-      <a href="http://www.umons.ac.be/${lang}" class="logo"
-	 ><img src="${url_base}images/UMONS+txt.png" alt="UMons" /></a>
-
+      <a href="http://www.umons.ac.be/${lang}" class="logo">
+	<img src="${url_base}images/UMONS+txt.png" alt="UMons" />
+      </a>
       <div class="umons-menu" ml:content="menu" >
 	<ul></ul>
       </div>
@@ -34,48 +34,51 @@
 
     <div id="maincol">
       <div class="horizontal-toolbar">
-	<a href="${url_annuaire}">Annuaire</a
-        ><span class="separation-bar">|</span><a href="${url_biblio}"
-						 >Bibliothèques</a
-	><span class="separation-bar">|</span><a href="${url_elearning}"
-						 >Cours en ligne</a
-	><span class="separation-bar">|</span><a href="${url_plan}">
-	  Plan d'accès</a
-	><span class="separation-bar">|</span><a href="${url_contact}"
-						 >Contact</a
-	><span class="separation-bar">|</span><a href="${url_emploi}"
-						 >Emploi</a
-	><span class="separation-bar">|</span><a href="${url_agenda}"
-						 >Agenda</a>
+	<a href="${url_annuaire}">Annuaire</a>
+	                                    <span class="separation-bar">|</span>
+	<a href="${url_biblio}">Bibliothèques</a>
+	                                    <span class="separation-bar">|</span>
+	<a href="${url_elearning}">Cours en ligne</a>
+	                                    <span class="separation-bar">|</span>
+	<a href="${url_plan}">Plan d'accès</a>
+	                                    <span class="separation-bar">|</span>
+	<a href="${url_contact}">Contact</a>
+	                                    <span class="separation-bar">|</span>
+	<a href="${url_emploi}">Emploi</a>
+	                                    <span class="separation-bar">|</span>
+	<a href="${url_agenda}">Agenda</a>
       </div>
       <div id="language">
-	<div class="horizontal-toolbar">
-	  Fr<span class="separation-bar">|</span
-          ><a href="#">En</a>
+	<div class="horizontal-toolbar">Fr
+	  <span class="separation-bar">|</span>
+	  <a href="#">En</a>
 	</div>
       </div>
       <form class="search-box" method="get"
 	    action="http://www.google.com/search">
-	<input type="text" name="q" value="Rechercher..."
-	       onblur="if(this.value=='') this.value='Rechercher...';"
-	       onfocus="if(this.value=='Rechercher...') this.value='';"
-	       />
-	<input type="hidden" name="as_sitesearch"
-	       value="${web_host}" />
-	<button type="submit"
-		><img src="${url_base}images/gosearch.gif" alt="Search"></button>
+	<input type="text"
+	       name="q" value="Rechercher..."  
+	       onblur="if(this.value=='')  this.value='Rechercher...';"
+	       onfocus="if(this.value=='Rechercher...') this.value='';" />
+	<input type="hidden" name="as_sitesearch" value="${web_host}"/>
+	<button type="submit">
+	  <img src="${url_base}images/gosearch.gif" alt="Search" />
+	</button>
       </form>
       <span class="banner">
-	<a href="${url_base}"
-	   ><img src="${url_base}images/${banner}" alt="${title}"/></a>
+	<a href="${url_base}" >
+	  <img src="${url_base}images/${banner}" alt="${title}"/>
+	</a>
       </span>
       <span class="navigation-bar">
-	<a href="http://www.umons.ac.be/${lang}">UMONS</a
-        ><span class="separation"
-	><img src="${url_base}images/right_arrow.png" /></span
-        ><a href="http://portail.umons.ac.be/${lang}/universite/facultes/fs/"
-	   >Faculté des sciences</a
-           ><span ml:replace="navigation_bar">links</span>
+	<a href="http://www.umons.ac.be/${lang}">UMONS</a>
+	<span class="separation">
+	  <img src="${url_base}images/right_arrow.png"/>
+	</span>
+	<a href="http://portail.umons.ac.be/${lang}/universite/facultes/fs/">
+	  Faculté des sciences
+	</a>
+	<span ml:replace="navigation_bar">links</span>
       </span>
 
       <div id="main">
@@ -98,21 +101,22 @@
     </div>
     <div id="footer">
       <div class="left">
-	<a href="http://www.umons.ac.be"
-	   ><img src="${url_base}images/UMONS.jpg" alt="UMons" /></a>
+	<a href="http://www.umons.ac.be">
+	  <img src="${url_base}images/UMONS.jpg" alt="UMons"/>
+	</a>
       </div>
       <div class="right">
-	<a href="http://www.academiewb.be/"
-	   ><img src="${url_base}images/Academie.png"
-		 alt="Académie Wallonie-Bruxelles" /></a>
-
+	<a href="http://www.academiewb.be/">
+	  <img src="${url_base}images/Academie.png"
+	       alt="Académie Wallonie-Bruxelles" />
+	</a>
 	<div class="horizontal-toolbar">
-	  Place du parc 20<span class="separation-bar">|</span
-	  >7000 Mons<span class="separation-bar">|</span
-          >Belgium<span class="separation-bar">|</span
-          ><span ml:replace="email">math@umons.ac.be</span
-          ><span class="separation-bar">|</span
-          ><a href="http://${web_host}">${web_host}</a>
+	  Place du parc 20 <span class="separation-bar">|</span > 
+	  7000 Mons <span class="separation-bar">|</span >
+	  Belgium <span class="separation-bar">|</span >
+	  <span ml:replace="email">math@umons.ac.be</span >
+	  <span class="separation-bar">|</span >
+	  <a href="http://${web_host}">${web_host}</a>
 	</div>
       </div>
     </div>
