@@ -1,5 +1,6 @@
 open Printf
 
+
 let () =
   if Array.length Sys.argv <= 1 then (
     eprintf "You must provide one or more files to compile.\n";

@@ -14,7 +14,7 @@ native: UMONS.cmxa template.cmxa
 UMONS.cma: UMONS.cmo
 UMONS.cmxa: UMONS.cmx
 
-UMONS.ml UMONS.mli: compile.exe UMONS.html
+UMONS.ml UMONS.mli: compile.exe UMONS.html UMONS.html.ml UMONS.html.mli
 	./$< UMONS.html
 
 compile.exe: template.cma

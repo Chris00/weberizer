@@ -367,7 +367,7 @@ let read_html fname =
   close_in fh;
   tpl
 
-let compile ?module_name fname =
+let compile_html ?trailer_ml ?trailer_mli ?(hide=[]) ?module_name fname =
   let module_name = match module_name with
     | None -> (try Filename.chop_extension fname with _ -> fname)
     | Some n -> n (* FIXME: check valid module name *) in
@@ -398,7 +398,20 @@ let compile ?module_name fname =
   Var.iter h (fun v _ ->
                 fprintf fm "let %s t v = { t with %s = v }\n" v v
              );
+  (* Submodule to access the values independently of the
+     representation of a template. *)
+  fprintf fm "\nmodule Get = struct\n";
+  Var.iter h (fun v _ ->
+                fprintf fm "  let %s t = t.%s\n" v v
+             );
+  fprintf fm "end\n";
   write_rendering_fun fm h tpl;
+  begin match trailer_ml with
+  | None -> ()
+  | Some txt ->
+      fprintf fm "(* ---------- Trailer -------------------- *)\n%s" txt
+  end;
+  fprintf fm "@?"; (* flush *)
   close_out fh;
   (* Output interface *)
   let fh = open_out (module_name ^ ".mli") in
@@ -411,10 +424,61 @@ let compile ?module_name fname =
   fprintf fm "val render : t -> html@\n";
   fprintf fm "  (** Renders the template as an HTML document. *)\n\n";
   Var.iter_ab h begin fun v t ->
-    fprintf fm "val %s : t -> %s -> t\n" v (Var.type_code t.Var.ty)
+    if not(List.mem v hide) then
+      fprintf fm "val %s : t -> %s -> t\n" v (Var.type_code t.Var.ty)
+  end;
+  begin match trailer_mli with
+  | None -> ()
+  | Some txt -> fprintf fm "\n\n%s" txt
   end;
   fprintf fm "@?"; (* flush *)
   close_out fh
+
+
+(* Compile an HTML file, possibly with some extra code in .html.ml
+ *************************************************************************)
+
+let content_of_file file =
+  let fh = open_in file in
+  let buf = Buffer.create 500 in
+  try
+    while true do
+      Buffer.add_string buf (input_line fh);
+      Buffer.add_char buf '\n'
+    done;
+    assert false
+  with End_of_file ->
+    close_in fh;
+    Buffer.contents buf
+
+(* Return the content of [file] if it exists or [None] otherwise. *)
+let maybe_content file =
+  if Sys.file_exists file then Some(content_of_file file) else None
+
+(* Looks for variable names to hide in the mli, declared with "@hide
+   var" or "@replace var". *)
+let hide_re = Str.regexp "(\\* *@hide +\\([a-zA-Z_]+\\) *\\*) *\n?"
+let vars_to_hide mli =
+  match mli with
+  | None -> [], mli
+  | Some mli ->
+      let i = ref 0 in
+      let acc = ref [] in
+      try
+        while true do
+          i := Str.search_forward hide_re mli !i;
+          acc := Str.matched_group 1 mli :: !acc;
+          incr i;
+        done;
+        assert false
+      with Not_found ->
+        !acc, Some(Str.global_replace hide_re "" mli)
+
+let compile f =
+  let trailer_ml = maybe_content (f ^ ".ml") in
+  let trailer_mli = maybe_content (f ^ ".mli") in
+  let hide, trailer_mli = vars_to_hide trailer_mli in
+  compile_html ?trailer_ml ?trailer_mli ~hide f
 
 
 (* Parsing with direct substitution
@@ -628,7 +692,7 @@ and protect_emails_element = function
                if content_is_email txt addr then None else Some content
              with Failure _ -> None in
            email ~args ?content addr
-       | _ -> failwith("Several email addesses not allowed"
+       | _ -> failwith("Several email addresses not allowed"
                       ^ String.concat ", " (List.map snd emails)))
   | Nethtml.Element(el, args, content) ->
       [Nethtml.Element(el, args, protect_emails content)]
