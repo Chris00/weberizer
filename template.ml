@@ -398,6 +398,13 @@ let compile_html ?trailer_ml ?trailer_mli ?(hide=[]) ?module_name fname =
   Var.iter h (fun v _ ->
                 fprintf fm "let %s t v = { t with %s = v }\n" v v
              );
+  (* Submodule to access the values independently of the
+     representation of a template. *)
+  fprintf fm "\nmodule Get = struct\n";
+  Var.iter h (fun v _ ->
+                fprintf fm "  let %s t = t.%s\n" v v
+             );
+  fprintf fm "end\n";
   write_rendering_fun fm h tpl;
   begin match trailer_ml with
   | None -> ()

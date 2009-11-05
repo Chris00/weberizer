@@ -16,7 +16,8 @@ val compile_html :
 
       @param trailer_ml additional code to be appended to the .ml
       file.  This code can use the functions of the interface to set
-      variables of the templates.
+      variables of the templates.  To access the value of a variable,
+      say "var", stored in the template [t], use [Get.var t].
       @param trailer_mli additional code to be appended to the .mli file.
       @param hide variables of the template that will not be present
       in the module interface.  This is only interesting if these
