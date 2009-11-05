@@ -7,19 +7,34 @@ let separation url_base =
   Element("span", ["class", "separation"],
           [Element("img", ["src", url_base ^ "images/right_arrow.png"], [])])
 
+(* For a path [p] possibly including a final file (which we are
+   displaying), add the path to go to each directory of the path. *)
+let rec add_rev_path p has_final_file = match p with
+  | [] -> []
+  | [fname] -> [(fname, "")]
+  | [dir; fname] when has_final_file -> [(dir, "."); (fname, "")]
+  | dir :: tl ->
+      let p = add_rev_path tl has_final_file in
+      (dir, "../" ^ snd(List.hd p)) :: p
+
 (* All paths start with "." which stands for the institute. *)
 let rec transform_path institut sep p = match p with
   | [] -> []
-  | a :: tl ->
+  | [(a, _)] -> [sep; Data(if a = "." then institut else String.capitalize a)]
+  | (a, rev) :: tl ->
       let a = if a = "." then institut else String.capitalize a in
-      sep :: Data(a) :: transform_path institut sep tl
+      let el = Element("a", ["href", rev], [Data a]) in
+      sep :: el :: transform_path institut sep tl
 
 let navigation_of_path tpl rel_path fname =
   let institut = Get.title tpl in
   let sep = separation (Get.url_base tpl) in
   let p = Neturl.split_path rel_path in
-  let p = (if fname = "index.html" || fname = "index.htm" then p
-           else p @ [try Filename.chop_extension fname with _ -> fname]) in
+  let p =
+    if fname = "index.html" || fname = "index.htm" then add_rev_path p false
+    else
+      let p = p @ [try Filename.chop_extension fname with _ -> fname] in
+      add_rev_path p true in
   navigation_bar tpl (transform_path institut sep p)
 
 
