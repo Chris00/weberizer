@@ -11,6 +11,13 @@ body {
   font-family: verdana, arial, helvetica, sans-serif;
 }
 
+@media print {
+  body {
+    padding-top: 0;
+    font-size: 12px;
+  }
+}
+
 div.horizontal-line {
   clear: both;
   padding: 0;
@@ -31,6 +38,17 @@ div.horizontal-line {
   float: right;
 }
 
+@media print {
+  .horizontal-line span.left {
+    border-top: 3px solid rgb(204,0,51);
+  }
+  .horizontal-line span.right {
+    border-top: 3px solid rgb(0, 171, 204);
+  }
+}
+
+/* Column for the menu ****************************************************/
+
 #menucol {
   width: 21%;
   float: left;
@@ -38,6 +56,10 @@ div.horizontal-line {
   padding: 0;
   padding-bottom: 1ex;
   /* border: 1px dashed; */
+}
+
+@media print {
+  #menucol { display: none; }
 }
 
 /* Logo UMons dans le coin supérieur gauche */
@@ -52,7 +74,7 @@ a.logo, a.logo:hover {
   background: #fff;
 }
 
-/* Menu */
+/* Menu *******************************************************************/
 /* http://www.seoconsultants.com/css/menus/tutorial/ */
 div.umons-menu {
   width: 72%;
@@ -150,6 +172,8 @@ div.umons-menu {
   border: 0;
 }
 
+/* Footer *****************************************************************/
+
 #footer {
   width: 100%;
   clear: both;
@@ -186,6 +210,14 @@ div.umons-menu {
   border: 0;
 }
 
+@media print {
+  #footer div.right img {
+    display: none;
+  }
+}
+
+/* Horizontal toolbar *****************************************************/
+
 .horizontal-toolbar {
   margin-top: 7px;
   margin-bottom: 10px;
@@ -214,27 +246,49 @@ span.separation-bar {
   /* font-weight: bold; */
 }
 
-
-#maincol {
-  width: 77.8%;
-  float: right;
-  /* border: 1px; border-style: dashed; */
+@media print {
+  /* Also for the address at the bottom of the page */
+  .horizontal-toolbar { font-size: 8px; }
 }
 
-form.recherche {
+/* Main column ************************************************************/
+
+@media screen {
+  #maincol {
+    width: 77.8%;
+    float: right;
+    /* border: 1px; border-style: dashed; */
+  }
+}
+@media print {
+  #maincol {
+    width: 100%;
+    float: none; /* => footer stays at the bottom */
+  }
+  #maincol div.horizontal-toolbar { display: none }
+}
+
+form.search-box {
   padding: 0;
   padding-bottom: 10px;
   margin: 0;
 }
 
-.recherche input, .recherche button {
+.search-box input, .search-box button {
   font-size: 75%;
-  font-family:Verdana, Arial, Helvetica, sans-serif;
+  font-family: Verdana, Arial, Helvetica, sans-serif;
   /* height: 4ex; */
 }
 
-#language {
-  float: right;
+@media print {
+  form.search-box { display: none }
+}
+
+@media screen {
+  #language { float: right; }
+}
+@media print {
+  #language { display: none; }
 }
 
 .navigation-bar {
