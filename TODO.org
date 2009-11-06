@@ -6,3 +6,4 @@
   http://www.htmlhelp.com/tools/validator/problems.html advises to put
   a space; the presented code does not work here.
 
+- Accessible Web design: http://www.syntacticweb.co.uk/calib.htm
