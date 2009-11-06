@@ -211,9 +211,11 @@ div.umons-menu {
 }
 
 @media print {
-  #footer div.right img {
-    display: none;
-  }
+  /* Work around Firefox bug, sometimes chopping floating elements at end
+     so at least the address appears (do not care so much about the logo) */
+  #footer div.left { float: left }
+  #footer div.right { float: none;  display: inline }
+  #footer div.right img { display: none }
 }
 
 /* Horizontal toolbar *****************************************************/
@@ -399,6 +401,12 @@ div.news {
   margin-bottom: 1ex;
 }
 
+@media print {
+  div.news {
+    border: 1px solid rgb(0, 171, 204);
+  }  
+}
+
 #advertisements div.news p {
   margin-top: 5px;
   margin-bottom: 5px;
@@ -454,6 +462,16 @@ a.know-more {
   background: #fffea8;
   color: rgb(176,11,58);
 }
+
+@media print {
+  .actions {
+    background: white;
+    color: #000;
+    border: 1px solid rgb(176,11,58);
+  }
+  .actions a { color: #000 }
+}
+
 
 /* Quotations */
 blockquote {
