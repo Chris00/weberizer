@@ -38,6 +38,13 @@ let navigation_of_path tpl rel_path fname =
   navigation_bar tpl (transform_path institut sep p)
 
 
+let stylesheet tpl ?(rel_base=true) url =
+  let url = if rel_base then Get.url_base tpl ^ "/" ^ url else url in
+  let s =Element("link", ["rel", "stylesheet"; "type", "text/css";
+                          "media","all"; "href", url],
+                 []) in
+  stylesheet tpl [s]
+
 
 let toolbar l =
   let tpl = lang empty l in

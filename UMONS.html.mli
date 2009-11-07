@@ -10,3 +10,10 @@ val toolbar : string -> t
 val navigation_of_path : t -> string -> string -> t
   (** [navigation_of_path t rel_path fname] add a navigation bar based
       on the path [rel_path]/[fname]. *)
+
+(* @hide stylesheet *)
+val stylesheet : t -> ?rel_base:bool -> string -> t
+  (** [stylesheet tpl url] add the CSS file given by [url] to the
+      stylesheet declarations.  If [rel_base] is true (the default),
+      interpret [url] as a path relative to the base URL (as set in
+      [tpl]. *)
