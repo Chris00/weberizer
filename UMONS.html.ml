@@ -20,7 +20,7 @@ let rec add_rev_path p has_final_file = match p with
   | [dir; fname] when has_final_file -> [(dir, "."); (fname, "")]
   | dir :: tl ->
       let p = add_rev_path tl has_final_file in
-      (dir, concat_path "../" snd(List.hd p)) :: p
+      (dir, concat_path "../" (snd(List.hd p))) :: p
 
 (* All paths start with "." which stands for the institute. *)
 let rec transform_path institut sep p = match p with
