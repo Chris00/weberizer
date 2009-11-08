@@ -3,6 +3,11 @@
 open Printf
 open Nethtml
 
+let concat_path p f =
+  if p = "" then f
+  else if p.[String.length p - 1] = '/' then p ^ f
+  else p ^ "/" ^ f
+
 let separation url_base =
   Element("span", ["class", "separation"],
           [Element("img", ["src", url_base ^ "images/right_arrow.png"], [])])
@@ -15,7 +20,7 @@ let rec add_rev_path p has_final_file = match p with
   | [dir; fname] when has_final_file -> [(dir, "."); (fname, "")]
   | dir :: tl ->
       let p = add_rev_path tl has_final_file in
-      (dir, "../" ^ snd(List.hd p)) :: p
+      (dir, concat_path "../" snd(List.hd p)) :: p
 
 (* All paths start with "." which stands for the institute. *)
 let rec transform_path institut sep p = match p with
@@ -39,7 +44,7 @@ let navigation_of_path tpl rel_path fname =
 
 
 let stylesheet tpl ?(rel_base=true) url =
-  let url = if rel_base then Get.url_base tpl ^ "/" ^ url else url in
+  let url = if rel_base then concat_path (Get.url_base tpl) url else url in
   let s =Element("link", ["rel", "stylesheet"; "type", "text/css";
                           "media","all"; "href", url],
                  []) in
