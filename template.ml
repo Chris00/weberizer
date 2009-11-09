@@ -116,13 +116,13 @@ struct
   let ty h v = (Hashtbl.find h v).ty
 
   let write_code_eval fm v args =
-    fprintf fm "(t.%s [" v;
+    fprintf fm "(Lazy.force t.%s [" v;
     List.iter (fun a -> fprintf fm "%S;" a) args;
     fprintf fm "])"
 
   let write_code_html fm h v args = match ty h v with
-    | HTML -> fprintf fm "t.%s" v
-    | String -> fprintf fm "[Nethtml.Data(t.%s)]" v
+    | HTML -> fprintf fm "Lazy.force t.%s" v
+    | String -> fprintf fm "[Nethtml.Data(Lazy.force t.%s)]" v
     | Fun_html -> write_code_eval fm v args;
     | Fun ->
         fprintf fm "[Nethtml.Data(";
@@ -137,7 +137,7 @@ struct
      @return the variable name to use. *)
   let binding_no = ref 0
   let write_binding fm h v args = match ty h v with
-    | HTML | String -> "t." ^ v
+    | HTML | String -> "Lazy.force t." ^ v
     | Fun_html | Fun ->
         incr binding_no;
         let n = !binding_no in
@@ -287,9 +287,9 @@ and parse_html h html = List.map (parse_element h) html
 
 let write_string_or_var fh s = match s with
   | String s -> fprintf fh "%S" s
-  | Var v -> fprintf fh "t.%s" v
+  | Var v -> fprintf fh "Lazy.force t.%s" v
   | Fun(f, args) ->
-      fprintf fh "t.%s " f;
+      fprintf fh "Lazy.force t.%s " f;
       List.iter (fun v -> fprintf fh "%S " v) args
 
 let write_subst_string fh s = match s with
@@ -375,34 +375,45 @@ let compile_html ?trailer_ml ?trailer_mli ?(hide=[]) ?module_name fname =
   (* Parse *)
   let h = Var.make() in
   let tpl = parse_html h tpl in
-  (* Output implementation *)
+  (* Output implementation.  All values are lazy so that using the
+     values (in the additional code [trailer_ml]) will not impose
+     their declaration to be in a particular order. *)
   let fh = open_out (module_name ^ ".ml") in
   let fm = formatter_of_out_channel fh in
   fprintf fm "(* Module generated from the template %s. *)\n@\n" fname;
   fprintf fm "type html = Nethtml.document list\n\n";
   fprintf fm "type t = {\n";
   Var.iter h (fun v t ->
-                fprintf fm "  %s: %s;\n" v (Var.type_code t.Var.ty);
+                fprintf fm "  %s: (%s) Lazy.t;\n" v (Var.type_code t.Var.ty);
              );
   fprintf fm "}\n\n";
   (* See [Var.type_to_string] for the names: *)
-  fprintf fm "let default_html = []\n";
-  fprintf fm "let default_string = \"\"\n";
-  fprintf fm "let default_fun_html _ = []\n";
-  fprintf fm "let default_fun _ = ()\n";
+  fprintf fm "let default_html = lazy []\n";
+  fprintf fm "let default_string = lazy \"\"\n";
+  fprintf fm "let default_fun_html = lazy(fun _ -> [])\n";
+  fprintf fm "let default_fun = lazy (fun _ -> \"\")\n";
   fprintf fm "let empty = {\n";
   Var.iter h begin fun v t ->
     fprintf fm "  %s = default_%s;\n" v (Var.type_to_string t.Var.ty);
   end;
   fprintf fm "}\n\n";
+  (* Setting values from the interface evaluate the value [v] before
+     putting it into the structure (making [lazy] meaningless in this case) *)
   Var.iter h (fun v _ ->
-                fprintf fm "let %s t v = { t with %s = v }\n" v v
+                fprintf fm "let %s t v = { t with %s = lazy v }\n" v v
              );
   (* Submodule to access the values independently of the
      representation of a template. *)
   fprintf fm "\nmodule Get = struct\n";
   Var.iter h (fun v _ ->
-                fprintf fm "  let %s t = t.%s\n" v v
+                fprintf fm "  let %s t = Lazy.force t.%s\n" v v
+             );
+  fprintf fm "end\n";
+  (* Submodule to set values, except that, here, delayed computations
+     are available. *)
+  fprintf fm "\nmodule Set = struct\n";
+  Var.iter h (fun v _ ->
+                fprintf fm "let %s t v = { t with %s = v }\n" v v
              );
   fprintf fm "end\n";
   write_rendering_fun fm h tpl;
