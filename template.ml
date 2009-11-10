@@ -116,13 +116,13 @@ struct
   let ty h v = (Hashtbl.find h v).ty
 
   let write_code_eval fm v args =
-    fprintf fm "(Lazy.force t.%s [" v;
+    fprintf fm "(eval t t.%s [" v;
     List.iter (fun a -> fprintf fm "%S;" a) args;
     fprintf fm "])"
 
   let write_code_html fm h v args = match ty h v with
-    | HTML -> fprintf fm "Lazy.force t.%s" v
-    | String -> fprintf fm "[Nethtml.Data(Lazy.force t.%s)]" v
+    | HTML -> fprintf fm "eval t t.%s" v
+    | String -> fprintf fm "[Nethtml.Data(eval t t.%s)]" v
     | Fun_html -> write_code_eval fm v args;
     | Fun ->
         fprintf fm "[Nethtml.Data(";
@@ -137,7 +137,7 @@ struct
      @return the variable name to use. *)
   let binding_no = ref 0
   let write_binding fm h v args = match ty h v with
-    | HTML | String -> "Lazy.force t." ^ v
+    | HTML | String -> "eval t t." ^ v
     | Fun_html | Fun ->
         incr binding_no;
         let n = !binding_no in
@@ -193,7 +193,7 @@ let rec parse_string_range add_string add_var acc s i0 i len_s =
 and parse_var add_string add_var acc s i0 i len_s =
   if i >= len_s then
     invalid_arg(sprintf "Missing '}' to close the variable %S"
-                (String.sub s i0 (len_s - i0)))
+                  (String.sub s i0 (len_s - i0)))
   else if s.[i] = '}' then (
     let acc = add_var acc (String.sub s i0 (i - i0)) in
     parse_string_range add_string add_var acc s (i+1) (i+1) len_s
@@ -287,9 +287,9 @@ and parse_html h html = List.map (parse_element h) html
 
 let write_string_or_var fh s = match s with
   | String s -> fprintf fh "%S" s
-  | Var v -> fprintf fh "Lazy.force t.%s" v
+  | Var v -> fprintf fh "eval t t.%s" v
   | Fun(f, args) ->
-      fprintf fh "Lazy.force t.%s " f;
+      fprintf fh "eval t t.%s " f;
       List.iter (fun v -> fprintf fh "%S " v) args
 
 let write_subst_string fh s = match s with
@@ -319,7 +319,7 @@ let write_args fh args =
 let rec write_rendering_fun fm h tpl =
   fprintf fm "@[<2>let render t =@\n";
   write_rendering_list fm h tpl;
-  fprintf fm "@]\n"
+  fprintf fm "@]@\n"
 and write_rendering_list fm h tpl =
   fprintf fm "@[<1>[";
   List.iter (fun tpl -> write_rendering_node fm h tpl) tpl;
@@ -375,52 +375,57 @@ let compile_html ?trailer_ml ?trailer_mli ?(hide=[]) ?module_name fname =
   (* Parse *)
   let h = Var.make() in
   let tpl = parse_html h tpl in
-  (* Output implementation.  All values are lazy so that using the
-     values (in the additional code [trailer_ml]) will not impose
-     their declaration to be in a particular order. *)
+  (* Output implementation *)
   let fh = open_out (module_name ^ ".ml") in
   let fm = formatter_of_out_channel fh in
   fprintf fm "(* Module generated from the template %s. *)\n@\n" fname;
   fprintf fm "type html = Nethtml.document list\n\n";
   fprintf fm "type t = {\n";
   Var.iter h (fun v t ->
-                fprintf fm "  %s: (%s) Lazy.t;\n" v (Var.type_code t.Var.ty);
+                fprintf fm "  %s: %s delay;\n" v (Var.type_code t.Var.ty);
              );
-  fprintf fm "}\n\n";
+  fprintf fm "}\nand 'a delay = Val of 'a | Delay of (t -> 'a);;\n\n";
+  fprintf fm "let eval t v = match v with Val a -> a | Delay f -> f t\n";
   (* See [Var.type_to_string] for the names: *)
-  fprintf fm "let default_html = lazy []\n";
-  fprintf fm "let default_string = lazy \"\"\n";
-  fprintf fm "let default_fun_html = lazy(fun _ -> [])\n";
-  fprintf fm "let default_fun = lazy (fun _ -> \"\")\n";
+  fprintf fm "let default_html = Val []\n";
+  fprintf fm "let default_string = Val \"\"\n";
+  fprintf fm "let default_fun_html = (fun _ -> Val [])\n";
+  fprintf fm "let default_fun = Val(fun _ -> \"\")\n";
   fprintf fm "let empty = {\n";
   Var.iter h begin fun v t ->
     fprintf fm "  %s = default_%s;\n" v (Var.type_to_string t.Var.ty);
   end;
   fprintf fm "}\n\n";
-  (* Setting values from the interface evaluate the value [v] before
-     putting it into the structure (making [lazy] meaningless in this case) *)
   Var.iter h (fun v _ ->
-                fprintf fm "let %s t v = { t with %s = lazy v }\n" v v
+                fprintf fm "let %s t v = { t with %s = Val v }\n" v v
              );
   (* Submodule to access the values independently of the
-     representation of a template. *)
-  fprintf fm "\nmodule Get = struct\n";
+     representation of a template.  Use an abstract type to force the
+     use of the [Set] module to be able to access the values through
+     [Get] functions. The coercing submodule is named [Template] to
+     have readable error messages. *)
+  fprintf fm "\n@[<2>module Template : sig@\ntype get@\n\
+              @[<2>module Get : sig@\n";
+  Var.iter h begin fun v t ->
+    fprintf fm "val %s : get -> %s@\n" v (Var.type_code t.Var.ty)
+  end;
+  fprintf fm "end@]@\n@[<2>module Set : sig@\n";
+  Var.iter h begin fun v t ->
+    fprintf fm "val %s : t -> (get -> %s) -> t@\n" v (Var.type_code t.Var.ty)
+  end;
+  fprintf fm "end@]@\nend = struct@\ntype get = t@\n";
+  fprintf fm "@[<2>module Get = struct@\n";
+  Var.iter h (fun v _ -> fprintf fm "let %s t = eval t t.%s@\n" v v);
+  fprintf fm "end@]@\n@[<2>module Set = struct@\n";
   Var.iter h (fun v _ ->
-                fprintf fm "  let %s t = Lazy.force t.%s\n" v v
+                fprintf fm "let %s t f = { t with %s = Delay f }@\n" v v
              );
-  fprintf fm "end\n";
-  (* Submodule to set values, except that, here, delayed computations
-     are available. *)
-  fprintf fm "\nmodule Set = struct\n";
-  Var.iter h (fun v _ ->
-                fprintf fm "let %s t v = { t with %s = v }\n" v v
-             );
-  fprintf fm "end\n";
+  fprintf fm "end@]@\nend@]@\nopen Template@\n@\n";
   write_rendering_fun fm h tpl;
   begin match trailer_ml with
   | None -> ()
   | Some txt ->
-      fprintf fm "(* ---------- Trailer -------------------- *)\n%s" txt
+      fprintf fm "(* ---------- Trailer -------------------- *)@\n%s" txt
   end;
   fprintf fm "@?"; (* flush *)
   close_out fh;

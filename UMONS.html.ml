@@ -32,29 +32,25 @@ let rec transform_path institut sep p = match p with
       sep :: el :: transform_path institut sep tl
 
 let navigation_of_path tpl rel_path fname =
-  Set.navigation_bar tpl
-    (lazy(
-       let institut = Get.title tpl in
-       let sep = separation (Get.url_base tpl) in
-       let p = Neturl.split_path rel_path in
-       let p =
-         if fname = "index.html" || fname = "index.htm" then
-           add_rev_path p false
-         else
-           let p = p @ [try Filename.chop_extension fname with _ -> fname] in
-           add_rev_path p true in
-       transform_path institut sep p))
+  Set.navigation_bar tpl begin fun t ->
+    let institut = Get.title tpl in
+    let sep = separation (Get.url_base tpl) in
+    let p = Neturl.split_path rel_path in
+    let p =
+      if fname = "index.html" || fname = "index.htm" then add_rev_path p false
+      else
+        let p = p @ [try Filename.chop_extension fname with _ -> fname] in
+        add_rev_path p true in
+    transform_path institut sep p
+  end
 
 
 let stylesheet tpl ?(rel_base=true) url =
-  Set.stylesheet tpl
-  (lazy begin
-     let url = if rel_base then concat_path (Get.url_base tpl) url else url in
-     let s =Element("link", ["rel", "stylesheet"; "type", "text/css";
-                             "media","all"; "href", url],
-                    []) in
-     [s]
-   end)
+  let url = if rel_base then concat_path (Get.url_base tpl) url else url in
+  let s =Element("link", ["rel", "stylesheet"; "type", "text/css";
+                          "media","all"; "href", url],
+                 []) in
+  stylesheet tpl [s]
 
 
 let toolbar l =

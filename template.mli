@@ -16,15 +16,15 @@ val compile_html :
 
       @param trailer_ml additional code to be appended to the .ml
       file.  This code can use the functions of the interface to set
-      variables of the templates.  To access the value of a variable,
-      say "var", stored in the template [t], use [Get.var t].  If you
-      create a function [f] that set a value depending on other ones,
-      you should use [Set.var t (lazy expr)], where [expr] contains
-      the [Get.var] functions.  This way, the values of the accessed
-      variables will be the last set ones (as opposed to the ones
-      present in the template when [f] is issued which would require
-      to document the hidden dependencies properly).  This is
-      important to be able to set the template value in any order.
+      variables of the templates.  You set a variable [v] using the
+      value of a variable [v'], you should use the construction [Set.v
+      tpl (fun t -> ... Get.v' t ...)] (which returns a copy of [tpl]
+      with [v] set) to ensure that the value of [v'] at the time o
+      rendering is used and not the one present in [tpl] when [v] is
+      set.  This is important to maintain the independence of
+      variables which may be set in any order (documenting that a
+      variable depends on others will lead to confusion and errors).
+      You should of course take care not to create dependency loops.
 
       @param trailer_mli additional code to be appended to the .mli file.
       @param hide variables of the template that will not be present
