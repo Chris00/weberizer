@@ -33,8 +33,8 @@ let rec transform_path institut sep p = match p with
 
 let navigation_of_path tpl rel_path fname =
   Set.navigation_bar tpl begin fun t ->
-    let institut = Get.title tpl in
-    let sep = separation (Get.url_base tpl) in
+    let institut = Get.title t in
+    let sep = separation (Get.url_base t) in
     let p = Neturl.split_path rel_path in
     let p =
       if fname = "index.html" || fname = "index.htm" then add_rev_path p false
@@ -46,12 +46,13 @@ let navigation_of_path tpl rel_path fname =
 
 
 let stylesheet tpl ?(rel_base=true) url =
-  let url = if rel_base then concat_path (Get.url_base tpl) url else url in
-  let s =Element("link", ["rel", "stylesheet"; "type", "text/css";
-                          "media","all"; "href", url],
-                 []) in
-  stylesheet tpl [s]
-
+  Set.stylesheet tpl begin fun t ->
+    let url = if rel_base then concat_path (Get.url_base t) url else url in
+    let s =Element("link", ["rel", "stylesheet"; "type", "text/css";
+                            "media","all"; "href", url],
+                   []) in
+    [s]
+  end
 
 let toolbar l =
   let tpl = lang empty l in

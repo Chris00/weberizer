@@ -17,3 +17,5 @@ val stylesheet : t -> ?rel_base:bool -> string -> t
       stylesheet declarations.  If [rel_base] is true (the default),
       interpret [url] as a path relative to the base URL (as set in
       [tpl]. *)
+
+(* @hide web_counter *)
