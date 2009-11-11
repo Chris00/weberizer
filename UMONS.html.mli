@@ -19,3 +19,6 @@ val stylesheet : t -> ?rel_base:bool -> string -> t
       [tpl]. *)
 
 (* @hide web_counter *)
+val bbclone : t -> name:string -> t
+  (** [bbclone tpl name] adds the PHP bbclone code in order to track
+      accesses to the page.  Register it under [name]. *)

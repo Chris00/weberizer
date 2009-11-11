@@ -68,3 +68,15 @@ let toolbar l =
   let tpl = url_agenda tpl (admin ^ "/scrp/Pages/Agenda.aspx") in
   tpl
 
+
+let bbclone tpl ~name =
+  Set.web_counter tpl begin fun t ->
+    (* HACK: "<?" is not supported by Nethtml, we use the fact that no
+       escaping is done when printing Data values. *)
+    [Data(sprintf "<?php
+	define(\"_BBC_PAGE_NAME\", %S);
+	define(\"_BBCLONE_DIR\", %S . \"../bbclone/\");
+	define(\"COUNTER\", _BBCLONE_DIR.\"mark_page.php\");
+	if (is_readable(COUNTER)) include_once(COUNTER);
+	?>" name (Get.url_base t))]
+  end
