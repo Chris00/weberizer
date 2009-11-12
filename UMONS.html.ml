@@ -96,11 +96,15 @@ let bbclone tpl rel_path fname =
 let separation_bar =
   Element("span", ["class", "separation-bar"], [Data "|"])
 
+let html_of_language (lang, url) =
+  if lang = "" then Data lang
+  else Element("a", ["href", url], [Data lang])
+
+let rec html_of_languages = function
+  | [] -> []
+  | [lang] -> [html_of_language lang]
+  | lang :: tl ->
+      html_of_language lang :: separation_bar :: html_of_languages tl
+
 let languages tpl langs =
-  let langs =
-    List.fold_right begin fun (lang, url) l ->
-      let lang = (if lang = "" then Data lang
-                  else Element("a", ["href", url], [Data lang])) in
-      lang :: separation_bar :: l
-    end langs [] in
-  languages tpl langs
+  languages tpl (html_of_languages langs)
