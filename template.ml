@@ -650,14 +650,14 @@ let email ?(args=[]) ?content e =
   let args = String.concat " " (List.map arg_to_string args) in
   let javascript = match content with
     | None -> Printf.sprintf "document.write('<a href=\"mailto:' + local \
-	 + '@%s\" %s>' + local + '@%s</a>')" host_query args host
+	 + '@%s\" %s>' + local + '@%s<\\/a>')" host_query args host
     | Some c ->
         let buf = Buffer.create 100 in
         let ch = new Netchannels.output_buffer buf in
         Nethtml.write ch c;
         ch#close_out();
         Printf.sprintf "document.write('<a href=\"mailto:' + local \
-	  + '@%s\" %s>%s</a>')" host_query args (Buffer.contents buf) in
+	  + '@%s\" %s>%s<\\/a>')" host_query args (Buffer.contents buf) in
   let noscript = match content with
     | None -> [Nethtml.Data(local_part);
               Nethtml.Element("abbr", ["title", "(at) -> @"],
