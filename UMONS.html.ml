@@ -92,3 +92,15 @@ let bbclone tpl rel_path fname =
 	if (is_readable(COUNTER)) include_once(COUNTER);
 	?>" name (Get.url_base t))]
   end
+
+let separation_bar =
+  Element("span", ["class", "separation-bar"], [Data "|"])
+
+let languages tpl langs =
+  let langs =
+    List.fold_right begin fun (lang, url) l ->
+      let lang = (if lang = "" then Data lang
+                  else Element("a", ["href", url], [Data lang])) in
+      lang :: separation_bar :: l
+    end langs [] in
+  languages tpl langs

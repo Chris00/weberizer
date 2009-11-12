@@ -22,3 +22,11 @@ val stylesheet : t -> ?rel_base:bool -> string -> t
 val bbclone : t -> string -> string -> t
   (** [bbclone tpl rel_path fname] adds the PHP bbclone code in order
       to track accesses to the page. *)
+
+(* @hide languages *)
+val languages : t -> (string * string) list -> t
+  (** [languages tpl langs] return (a vopy of) the template [tpl] with
+      the language links set according to [langs].  [langs] is a list
+      of [(lang, url)] where [lang] is the name of the language and
+      [url] is the URL where the page can be found ([""] if it is the
+      current pagea). *)
