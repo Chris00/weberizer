@@ -13,35 +13,41 @@ let separation url_base =
           [Element("img", ["src", url_base ^ "images/right_arrow.png"], [])])
 
 (* For a path [p] possibly including a final file (which we are
-   displaying), add the path to go to each directory of the path. *)
-let rec add_rev_path p has_final_file = match p with
-  | [] -> []
-  | [fname] -> [(fname, "")]
-  | [dir; fname] when has_final_file -> [(dir, "."); (fname, "")]
-  | dir :: tl ->
-      let p = add_rev_path tl has_final_file in
-      (dir, concat_path "../" (snd(List.hd p))) :: p
+   displaying), add the path to go to each directory of the path from
+   its final location. *)
+let rec add_rev_path p maybe_final_file = match p, maybe_final_file with
+  | [], None -> []
+  | [], Some fname -> [(fname, fname)]
+  | [dir], None -> [(dir, ".")]
+  | [dir], Some fname -> [(dir, "."); (fname, fname)]
+  | dir :: tl, _ ->
+      let p = add_rev_path tl maybe_final_file in
+      (dir, concat_path (snd(List.hd p)) "../") :: p
+
+let hierarchy_of_path t rel_path fname =
+  let institut = Get.title t in
+  let p = Neturl.split_path rel_path in
+  let p =
+    if fname = "index.html" || fname = "index.htm" then add_rev_path p None
+    else
+      (* FIXME: use the <title> in the file if there is one *)
+      let title = try Filename.chop_extension fname with _ -> fname in
+      add_rev_path p (Some(String.capitalize title)) in
+  let to_name (a,p) = (if a = "." then institut else String.capitalize a), p in
+  List.map to_name p
 
 (* All paths start with "." which stands for the institute. *)
-let rec transform_path institut sep p = match p with
+let rec transform_path sep p = match p with
   | [] -> []
-  | [(a, _)] -> [sep; Data(if a = "." then institut else String.capitalize a)]
+  | [(a, _)] -> [sep; Data a]
   | (a, rev) :: tl ->
-      let a = if a = "." then institut else String.capitalize a in
       let el = Element("a", ["href", rev], [Data a]) in
-      sep :: el :: transform_path institut sep tl
+      sep :: el :: transform_path sep tl
 
 let navigation_of_path tpl rel_path fname =
   Set.navigation_bar tpl begin fun t ->
-    let institut = Get.title t in
     let sep = separation (Get.url_base t) in
-    let p = Neturl.split_path rel_path in
-    let p =
-      if fname = "index.html" || fname = "index.htm" then add_rev_path p false
-      else
-        let p = p @ [try Filename.chop_extension fname with _ -> fname] in
-        add_rev_path p true in
-    transform_path institut sep p
+    transform_path sep (hierarchy_of_path t rel_path fname)
   end
 
 
@@ -68,9 +74,15 @@ let toolbar l =
   let tpl = url_agenda tpl (admin ^ "/scrp/Pages/Agenda.aspx") in
   tpl
 
+let rec list_last_element = function
+  | [] -> failwith "list_last_element"
+  | [e] -> e
+  | _ :: tl -> list_last_element tl
 
-let bbclone tpl ~name =
+let bbclone tpl rel_path fname =
   Set.web_counter tpl begin fun t ->
+    let nav = hierarchy_of_path t rel_path fname in
+    let name, _ = list_last_element nav in
     (* HACK: "<?" is not supported by Nethtml, we use the fact that no
        escaping is done when printing Data values. *)
     [Data(sprintf "<?php
