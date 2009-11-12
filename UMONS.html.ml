@@ -97,7 +97,7 @@ let separation_bar =
   Element("span", ["class", "separation-bar"], [Data "|"])
 
 let html_of_language (lang, url) =
-  if lang = "" then Data lang
+  if url = "" then Data lang
   else Element("a", ["href", url], [Data lang])
 
 let rec html_of_languages = function
