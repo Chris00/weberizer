@@ -656,8 +656,9 @@ let email ?(args=[]) ?content e =
         let ch = new Netchannels.output_buffer buf in
         Nethtml.write ch c;
         ch#close_out();
-        Printf.sprintf "document.write('<a href=\"mailto:' + local \
-	  + '@%s\" %s>%s<\\/a>')" host_query args (Buffer.contents buf) in
+        let txt = String.escaped (Buffer.contents buf) in
+        Printf.sprintf "document.write(\"<a href=\\\"mailto:\" + local \
+	  + \"@%s\\\" %s>%s<\\/a>\")" host_query args txt in
   let noscript = match content with
     | None -> [Nethtml.Data(local_part);
               Nethtml.Element("abbr", ["title", "(at) -> @"],
