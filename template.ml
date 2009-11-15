@@ -593,9 +593,13 @@ let read ?bindings fname =
 (* Utilities
  ***********************************************************************)
 
-let write_html html fname =
+let write_html ?(doctype=true) html fname =
   let oc = new Netchannels.output_channel (open_out fname) in
-  Nethtml.write oc html;
+  if doctype then
+    oc#output_string
+      "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\"
+          \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\">";
+  Nethtml.write oc html ~dtd:Nethtml.html40_dtd;
   oc#close_out()
 
 

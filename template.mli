@@ -80,9 +80,11 @@ val read : ?bindings:Binding.t -> string -> html
 
 (** {1 Utilities} *)
 
-val write_html : html -> string -> unit
+val write_html : ?doctype:bool -> html -> string -> unit
   (** [write_html html fname] writes the textual representation of the
-      [html] to the file [fname]. *)
+      [html] to the file [fname].
+
+      @param doctype whether to output a doctype (default: [true]). *)
 
 val body_of : html -> html
   (** [body_of html] returns the body of the HTML document or the
