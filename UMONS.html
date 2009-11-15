@@ -55,16 +55,20 @@
           ><a href="#">En</a>
 	</div>
       </div>
+
       <form class="search-box" method="get"
 	    action="http://www.google.com/search">
-	<input type="text" name="q" value="Rechercher..."
-	       onblur="if(this.value=='') this.value='Rechercher...';"
-	       onfocus="if(this.value=='Rechercher...') this.value='';"
-	       />
-	<input type="hidden" name="as_sitesearch"
-	       value="${web_host}" />
-	<button type="submit"
-		><img src="${url_base}images/gosearch.gif" alt="Search"></button>
+	<div>
+	  <input type="text" name="q" value="Rechercher..."
+		 onblur="if(this.value=='') this.value='Rechercher...';"
+		 onfocus="if(this.value=='Rechercher...') this.value='';"
+		 />
+	  <input type="hidden" name="as_sitesearch"
+		 value="${web_host}" />
+	  <button type="submit"
+		  ><img src="${url_base}images/gosearch.gif"
+			alt="Search" ></button>
+	</div>
       </form>
       <span class="banner">
 	<a href="${url_base}"
@@ -73,7 +77,7 @@
       <span class="navigation-bar">
 	<a href="http://portail.umons.ac.be/${lang}">UMONS</a
         ><span class="separation"
-	><img src="${url_base}images/right_arrow.png" /></span
+	><img src="${url_base}images/right_arrow.png" alt="&gt;" /></span
         ><a href="http://portail.umons.ac.be/${lang}/universite/facultes/fs/"
 	   >Faculté des sciences</a
            ><span ml:replace="navigation_bar">links</span>

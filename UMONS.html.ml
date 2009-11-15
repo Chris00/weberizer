@@ -10,7 +10,8 @@ let concat_path p f =
 
 let separation url_base =
   Element("span", ["class", "separation"],
-          [Element("img", ["src", url_base ^ "images/right_arrow.png"], [])])
+          [Element("img", ["src", url_base ^ "images/right_arrow.png";
+                           "alt", "&gt;"], [])])
 
 (* For a path [p] possibly including a final file (which we are
    displaying), add the path to go to each directory of the path from

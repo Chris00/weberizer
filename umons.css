@@ -481,6 +481,10 @@ blockquote {
   font-size: 90%;
 }
 
+blockquote p {
+  margin-top: 0;
+}
+
 /* Table */
 tr.even {
   background-color: #d8d8d8;

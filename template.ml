@@ -644,6 +644,9 @@ let arg_to_string (a,v) =
   let v = Str.global_replace quote_quot_re "&quot;" v in
   a ^ "=\"" ^ v ^ "\""
 
+(* See http://javascript.about.com/library/blnoscript.htm for ideas on
+   how to get rid of <noscript>. *)
+let email_id = ref 0
 let email ?(args=[]) ?content e =
   let at = String.index e '@' in
   let local_part = String.sub e 0 at in
@@ -652,32 +655,36 @@ let email ?(args=[]) ?content e =
   let host = (try String.sub host_query 0 (String.index host_query '?')
               with Not_found -> host_query) in
   let args = String.concat " " (List.map arg_to_string args) in
-  let javascript = match content with
-    | None -> Printf.sprintf "document.write('<a href=\"mailto:' + local \
-	 + '@%s\" %s>' + local + '@%s<\\/a>')" host_query args host
-    | Some c ->
+  incr email_id;
+  let id = Printf.sprintf "ocaml_%i" !email_id in
+  let javascript = Printf.sprintf
+    "local = %S;\n\
+     h = %S;\n\
+     document.getElementById(%S).innerHTML = \
+     '<a href=\"mailto:' + local + '@' + h + \"\\\" %s>%s<\\/a>\";"
+    local_part host_query id args
+    (match content with
+     | None -> "\" + local + '@' + h + \""
+     | Some c ->
         let buf = Buffer.create 100 in
         let ch = new Netchannels.output_buffer buf in
         Nethtml.write ch c;
         ch#close_out();
-        let txt = String.escaped (Buffer.contents buf) in
-        Printf.sprintf "document.write(\"<a href=\\\"mailto:\" + local \
-	  + \"@%s\\\" %s>%s<\\/a>\")" host_query args txt in
+        String.escaped (Buffer.contents buf)) in
   let noscript = match content with
     | None -> [Nethtml.Data(local_part);
-              Nethtml.Element("abbr", ["title", "(at) -> @"],
+              Nethtml.Element("abbr", ["title", "(at) &rarr; @"],
                               [Nethtml.Data "(at)"]);
               Nethtml.Data host]
     | Some c -> c @ [Nethtml.Data " &#9001;";
                     Nethtml.Data(local_part);
-                    Nethtml.Element("abbr", ["title", "(at) -> @"],
+                    Nethtml.Element("abbr", ["title", "(at) &rarr; @"],
                                     [Nethtml.Data "(at)"]);
                     Nethtml.Data host;
                     Nethtml.Data "&#9002;" ] in
-  [Nethtml.Element("script", ["type", "text/javascript"],
-                   [Nethtml.Data(Printf.sprintf "<!--;\n\
-                     local = %S\n%s\n//-->" local_part javascript) ]);
-   Nethtml.Element("noscript", [], noscript) ]
+  [Nethtml.Element("span", ["id", id], noscript);
+   Nethtml.Element("script", ["type", "text/javascript"],
+                   [Nethtml.Data("<!--;\n" ^ javascript ^ "\n//-->") ])]
 
 let is_email (a, e) =
   a = "href"
