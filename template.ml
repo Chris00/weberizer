@@ -402,9 +402,9 @@ let compile_html ?trailer_ml ?trailer_mli ?(hide=[]) ?module_name fname =
   (* Submodule to access the values independently of the
      representation of a template.  Use an abstract type to force the
      use of the [Set] module to be able to access the values through
-     [Get] functions. The coercing submodule is named [Template] to
+     [Get] functions. The coercing submodule is named [Variable] to
      have readable error messages. *)
-  fprintf fm "\n@[<2>module Template : sig@\ntype get@\n\
+  fprintf fm "\n@[<2>module Variable : sig@\ntype get@\n\
               @[<2>module Get : sig@\n";
   Var.iter h begin fun v t ->
     fprintf fm "val %s : get -> %s@\n" v (Var.type_code t.Var.ty)
@@ -420,7 +420,7 @@ let compile_html ?trailer_ml ?trailer_mli ?(hide=[]) ?module_name fname =
   Var.iter h (fun v _ ->
                 fprintf fm "let %s t f = { t with %s = Delay f }@\n" v v
              );
-  fprintf fm "end@]@\nend@]@\nopen Template@\n@\n";
+  fprintf fm "end@]@\nend@]@\nopen Variable@\n@\n";
   write_rendering_fun fm h tpl;
   begin match trailer_ml with
   | None -> ()
@@ -614,30 +614,81 @@ let body_of html =
   let body = get_body_of html in
   if body = [] then html else body
 
-let rec iter_files_in_dir filter root rel_dir f =
-  let dir = Filename.concat root rel_dir in
-  let files = Sys.readdir dir in
-  for i = 0 to Array.length files - 1 do
-    let file = files.(i) in
-    if file <> "" (* should not happen *) && file.[0] <> '.'
-      && filter rel_dir file then begin
-      if Sys.is_directory(Filename.concat dir file) then
-        iter_files_in_dir filter root (Filename.concat rel_dir file) f
-      else f rel_dir file
-    end
-  done
+module Path =
+struct
+  type t = {
+    base : string;
+    from_base : string;
+    to_base : string;
+    filename : string;
+  }
 
-let filter_default rel_dir f =
-  Filename.check_suffix f ".html" || Filename.check_suffix f ".php"
+  let make base = { base = base; from_base = ""; to_base = ""; filename = "" }
 
-let iter_files ?(filter=filter_default) root f =
-  if Sys.is_directory root then iter_files_in_dir filter root "." f
-  else f (Filename.dirname root) (Filename.basename root)
+  let from_base p = p.from_base
+  let to_base p = p.to_base
+  let filename p = p.filename
 
-let rec revert_path p =
-  let dir = Filename.dirname p in
-  if dir = "." then (if Filename.basename p = "." then "" else "../")
-  else Filename.concat ".." (revert_path dir)
+  (* Use "/" to separate components because they are supported on
+     windows and are mandatory for HTML paths *)
+  let concat dir file =
+    if dir = "" then file else dir ^ "/" ^ file
+
+  let full_path p = concat p.base (from_base p)
+
+  let full p =
+    let f = filename p in
+    if f = "" then full_path p else concat (full_path p) f
+
+  let concat_dir p dir =
+    assert(filename p = ""); (* [p] is supposed to represent a dir *)
+    { p with
+        from_base = concat p.from_base dir;
+        to_base = concat ".." p.to_base;
+    }
+
+  let concat_file p fname =
+    assert(filename p = ""); (* [p] is supposed to represent a dir *)
+    { p with filename = fname; }
+
+  let rec iter_files ~filter_dir ~filter_file p f =
+    let full_path = full_path p in
+    let files = Sys.readdir full_path in
+    for i = 0 to Array.length files - 1 do
+      let file = files.(i) in
+      if file <> "" (* should not happen *) && file.[0] <> '.' (* hidden *)
+      then begin
+        if Sys.is_directory (concat full_path file) then
+          let p = concat_dir p file in
+          (if filter_dir p then iter_files ~filter_dir ~filter_file p f)
+        else
+          let p = concat_file p file in
+          if filter_file p then f p
+      end
+    done
+end
+
+let rec mkdir_if_absent ?(perm=0o750) dir =
+  (* default [perm]: group read => web server *)
+  if not(Sys.file_exists dir) then begin
+    mkdir_if_absent ~perm (Filename.dirname dir);
+    Unix.mkdir dir perm
+  end
+
+let iter_html ?(default_lang="Fr") ?(filter=(fun _ -> true)) base f =
+  if not(Sys.is_directory base) then invalid_arg "Template.iter_files";
+  let output_dir = String.lowercase default_lang in
+  let filter_dir p = Path.from_base p <> output_dir
+  and filter_file p =
+    Filename.check_suffix (Path.filename p) ".html" && filter p in
+  mkdir_if_absent output_dir;
+  Path.iter_files ~filter_file ~filter_dir (Path.make base) begin fun p ->
+    let html = f p in
+    let dir = Filename.concat output_dir (Path.from_base p) in
+    mkdir_if_absent dir;
+    write_html html (Filename.concat dir (Path.filename p))
+  end
+
 
 let quote_quot_re = Str.regexp_string "\"";;
 let arg_to_string (a,v) =
@@ -743,3 +794,6 @@ and apply_relative_url_element base = function
       Nethtml.Element(e, args, apply_relative_url base content)
   | Nethtml.Data _ as e -> e
 
+let relative_url_are_from_base p html =
+  let base = make_url ~path:(split_path(Path.to_base p)) ip_url_syntax in
+  apply_relative_url base html

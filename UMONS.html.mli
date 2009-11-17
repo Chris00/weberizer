@@ -7,9 +7,9 @@ val toolbar : string -> t
       abbreviation of the main university site). *)
 
 (* @hide navigation_bar *)
-val navigation_of_path : t -> string -> string -> t
-  (** [navigation_of_path t rel_path fname] add a navigation bar based
-      on the path [rel_path]/[fname]. *)
+val navigation_of_path : t -> Template.Path.t -> t
+  (** [navigation_of_path t path] add a navigation bar based on the
+      [path]. *)
 
 (* @hide stylesheet *)
 val stylesheet : t -> ?rel_base:bool -> string -> t
@@ -19,7 +19,7 @@ val stylesheet : t -> ?rel_base:bool -> string -> t
       [tpl]. *)
 
 (* @hide web_counter *)
-val bbclone : t -> string -> string -> t
+val bbclone : t -> Template.Path.t -> t
   (** [bbclone tpl rel_path fname] adds the PHP bbclone code in order
       to track accesses to the page. *)
 

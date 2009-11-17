@@ -90,13 +90,34 @@ val body_of : html -> html
   (** [body_of html] returns the body of the HTML document or the
       entire document if no body is found. *)
 
-val iter_files : ?filter:(string -> string -> bool) ->
-  string -> (string -> string -> unit) -> unit
-  (** [iter_files root f] iterates [f rel_dir fname] on all files
-      under [root] (that is [root] itself if it is a file and all
-      files in [root] and its subdirectories if [root] is a directory)
-      where [fname] is the base name of the file and [rel_path] its
-      relative path to [root].
+module Path :
+sig
+  type t
+    (** Path relative to a base directory. *)
+
+  val from_base : t -> string
+    (** The (normalized) path to the filename (the filename, if any,
+        being excluded) relative to the base directory.  Returns [""]
+        if we are in the base directory. *)
+
+  val filename : t -> string
+    (** The filename the path points to.  The path designates a
+        directory if and only if[filename] returns [""]. *)
+
+  val to_base : t -> string
+    (** The path from the directory of the filename to the base
+        directory.  One can see it as the "inverse" of [from_base]. *)
+
+  val full : t -> string
+    (** Returns a path that can be used to open the file (or query the
+        directory). *)
+end
+
+val iter_html : ?default_lang:string -> ?filter:(Path.t -> bool) ->
+  string -> (Path.t -> html) -> unit
+  (** [iter_html base f] iterates [f file] on all HTML files under
+      [base] (the argument of [f] is guaranteed to be a path to a
+      file).  @raise Invalid_argument if [base] is not a directory.
 
       @param filter examine the file of dir iff the condition [filter
       rel_dir f] holds on the relative path [rel_dir] from [root] and
@@ -104,10 +125,10 @@ val iter_files : ?filter:(string -> string -> bool) ->
       files.  Files and dirs starting with a dot are {i always}
       excluded. *)
 
-val revert_path : string -> string
-  (** [revert_path p] returns a relative path [q] so that cd [p]
-      followed by cd [q] is equivalent to staying in the current
-      directory (assuming [p] exists). *)
+val relative_url_are_from_base : Path.t -> html -> html
+  (** [relative_url_are_from_base path html] prefix all relative URLs
+      in [html] so that they are specified according to the directory
+      given by [path] instead of the base path. *)
 
 val email : ?args:(string * string) list -> ?content:html -> string -> html
   (** [email e] return some HTML/javascript code to protect the email
@@ -119,10 +140,6 @@ val email : ?args:(string * string) list -> ?content:html -> string -> html
       @param content Tells whether the content of the email link is
       the email itself (no [content] specified, the default) or some
       other data. *)
-
-val apply_relative_url : Neturl.url -> html -> html
-  (** [apply_relative_url base html] prefix all relative URLs in
-      [html] by [base]. *)
 
 val protect_emails : html -> html
   (** [protect_emails html] changes all emails hrefs in [html] in

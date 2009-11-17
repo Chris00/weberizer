@@ -25,19 +25,18 @@ let rec add_rev_path p maybe_final_file = match p, maybe_final_file with
       let p = add_rev_path tl maybe_final_file in
       (dir, concat_path (snd(List.hd p)) "../") :: p
 
-let hierarchy_of_path t rel_path fname =
+let hierarchy_of_path t path =
   let institut = Get.title t in
-  let p = Neturl.split_path rel_path in
+  let fname = Template.Path.filename path in
+  let p = institut :: Neturl.split_path (Template.Path.from_base path) in
   let p =
     if fname = "index.html" || fname = "index.htm" then add_rev_path p None
     else
       (* FIXME: use the <title> in the file if there is one *)
       let title = try Filename.chop_extension fname with _ -> fname in
       add_rev_path p (Some(String.capitalize title)) in
-  let to_name (a,p) = (if a = "." then institut else String.capitalize a), p in
-  List.map to_name p
+  List.map (fun (a,p) -> (String.capitalize a, p)) p
 
-(* All paths start with "." which stands for the institute. *)
 let rec transform_path sep p = match p with
   | [] -> []
   | [(a, _)] -> [sep; Data a]
@@ -45,10 +44,10 @@ let rec transform_path sep p = match p with
       let el = Element("a", ["href", rev], [Data a]) in
       sep :: el :: transform_path sep tl
 
-let navigation_of_path tpl rel_path fname =
+let navigation_of_path tpl p =
   Set.navigation_bar tpl begin fun t ->
     let sep = separation (Get.url_base t) in
-    transform_path sep (hierarchy_of_path t rel_path fname)
+    transform_path sep (hierarchy_of_path t p)
   end
 
 
@@ -80,9 +79,9 @@ let rec list_last_element = function
   | [e] -> e
   | _ :: tl -> list_last_element tl
 
-let bbclone tpl rel_path fname =
+let bbclone tpl p =
   Set.web_counter tpl begin fun t ->
-    let nav = hierarchy_of_path t rel_path fname in
+    let nav = hierarchy_of_path t p in
     let name, _ = list_last_element nav in
     (* HACK: "<?" is not supported by Nethtml, we use the fact that no
        escaping is done when printing Data values. *)
