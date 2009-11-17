@@ -645,6 +645,7 @@ struct
     { p with
         from_base = concat p.from_base dir;
         to_base = concat ".." p.to_base;
+        (* FIXME: will end with "/", wanted?? certainly used! *)
     }
 
   let concat_file p fname =
