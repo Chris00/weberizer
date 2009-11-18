@@ -619,14 +619,20 @@ struct
   type t = {
     base : string;
     from_base : string;
+    rev_from_base : string list;
     to_base : string;
     filename : string;
   }
 
-  let make base = { base = base; from_base = ""; to_base = ""; filename = "" }
+  let make base = {
+    base = base;
+    from_base = "";  rev_from_base = [];  to_base = "";
+    filename = "" }
 
   let from_base p = p.from_base
+  let from_base_split p = List.rev p.rev_from_base
   let to_base p = p.to_base
+  let to_base_split p = List.rev_map (fun _ -> "..") p.rev_from_base
   let filename p = p.filename
 
   (* Use "/" to separate components because they are supported on
@@ -644,6 +650,7 @@ struct
     assert(filename p = ""); (* [p] is supposed to represent a dir *)
     { p with
         from_base = concat p.from_base dir;
+        rev_from_base = dir :: p.rev_from_base;
         to_base = concat ".." p.to_base;
         (* FIXME: will end with "/", wanted?? certainly used! *)
     }
@@ -796,5 +803,6 @@ and apply_relative_url_element base = function
   | Nethtml.Data _ as e -> e
 
 let relative_url_are_from_base p html =
-  let base = make_url ~path:(split_path(Path.to_base p)) ip_url_syntax in
+  (* FIXME: Neturl.apply_relative_url eats one ".." -- mail sent to Gerd. *)
+  let base = make_url ~path:(".." :: Path.to_base_split p) ip_url_syntax in
   apply_relative_url base html

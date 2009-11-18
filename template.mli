@@ -100,6 +100,11 @@ sig
         being excluded) relative to the base directory.  Returns [""]
         if we are in the base directory. *)
 
+  val from_base_split : t -> string list
+    (** The path to the filename relative to the base directory
+        splitted into its components (the filename, if any, being
+        excluded).  Returns [[]] if we are in the base directory. *)
+
   val filename : t -> string
     (** The filename the path points to.  The path designates a
         directory if and only if[filename] returns [""]. *)
@@ -107,6 +112,10 @@ sig
   val to_base : t -> string
     (** The path from the directory of the filename to the base
         directory.  One can see it as the "inverse" of [from_base]. *)
+
+  val to_base_split : t -> string list
+    (** The path from the directory of the filename to the base
+        directory.  One can see it as the "inverse" of [from_base_split]. *)
 
   val full : t -> string
     (** Returns a path that can be used to open the file (or query the
