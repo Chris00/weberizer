@@ -8,7 +8,7 @@ let concat_path p f =
   else if p.[String.length p - 1] = '/' then p ^ f
   else p ^ "/" ^ f
 
-let separation url_base =
+let separation_arrow url_base =
   Element("span", ["class", "separation"],
           [Element("img", ["src", url_base ^ "images/right_arrow.png";
                            "alt", "&gt;"], [])])
@@ -22,7 +22,7 @@ let rec transform_path sep p = match p with
 
 let navigation_of_path tpl p =
   Set.navigation_bar tpl begin fun t ->
-    let sep = separation (Get.url_base t) in
+    let sep = separation_arrow (Get.url_base t) in
     transform_path sep (Template.Path.navigation p ~base:(Get.title t))
   end
 
@@ -36,19 +36,52 @@ let stylesheet tpl ?(rel_base=true) url =
     [s]
   end
 
-let toolbar l =
-  let tpl = lang empty l in
-  let admin = sprintf "http://portail.umons.ac.be/%s/universite/admin" l in
-  let tpl = url_annuaire tpl
-    "http://telephone.umh.ac.be/reppersumons/REPPERSlist.asp" in
-  let tpl = url_biblio tpl "http://w3.umh.ac.be/Bibli/sms.htm" in
-  let tpl = url_elearning tpl
-    "https://applications.umons.ac.be/moodleumh/course/category.php?id=2" in
-  let tpl = url_plan tpl
-    (admin ^ "/scrp/plancampus/Pages/CampusSciencesMédecineFTI-EII.aspx") in
-  let tpl = url_emploi tpl (admin ^ "/drh/emploi/Pages/Emploi.aspx") in
-  let tpl = url_agenda tpl (admin ^ "/scrp/Pages/Agenda.aspx") in
-  tpl
+let separation_bar =
+  Element("span", ["class", "separation-bar"], [Data "|"])
+
+let html_of_item (name, url) =
+  if url = "" then Data name
+  else Element("a", ["href", url], [Data name])
+
+let rec horizontal_toolbar = function
+  | [] -> []
+  | [item] -> [html_of_item item]
+  | item :: tl -> html_of_item item :: separation_bar :: horizontal_toolbar tl
+
+let toolbar_fr contact =
+  let admin = sprintf "http://portail.umons.ac.be/FR/universite/admin" in
+  ["Annuaire", "http://telephone.umh.ac.be/reppersumons/REPPERSlist.asp";
+   "Bibliothèques", "http://w3.umh.ac.be/Bibli/sms.htm";
+   "Cours en ligne",
+   "https://applications.umons.ac.be/moodleumh/course/category.php?id=2";
+   "Plan d'accès",
+   (admin ^ "/scrp/plancampus/Pages/CampusSciencesMédecineFTI-EII.aspx");
+   "Contact", contact;
+   "Emploi", (admin ^ "/drh/emploi/Pages/Emploi.aspx");
+   "Agenda", (admin ^ "/scrp/Pages/Agenda.aspx") ]
+
+let toolbar_en contact =
+  let admin = sprintf "http://portail.umons.ac.be/EN/universite/admin" in
+  ["Directory", "http://telephone.umh.ac.be/reppersumons/REPPERSlist.asp";
+   "Libraries", "http://w3.umh.ac.be/Bibli/sms.htm";
+   "E-learning",
+   "https://applications.umons.ac.be/moodleumh/course/category.php?id=2";
+   "Directions",
+   (admin ^ "/scrp/plancampus/Pages/CampusSciencesMédecineFTI-EII.aspx");
+   "Contact", contact;
+   "Jobs", (admin ^ "/drh/emploi/Pages/Emploi.aspx");
+   "Agenda", (admin ^ "/scrp/Pages/Agenda.aspx") ]
+
+let toolbar tpl p contact =
+  let l = String.lowercase(Template.Path.language p) in
+  let tpl = lang tpl l in
+  let tpl = url_base tpl (Template.Path.to_base p) in
+  let bar = match l with
+    | "en" -> horizontal_toolbar (toolbar_en contact)
+    | "fr" | "" -> horizontal_toolbar (toolbar_fr contact)
+    | _ -> failwith "UMONS.toolbar: language not recognized" in
+  toolbar tpl bar
+
 
 let rec list_last_element = function
   | [] -> failwith "list_last_element"
@@ -69,18 +102,5 @@ let bbclone tpl p =
 	?>" name (Get.url_base t))]
   end
 
-let separation_bar =
-  Element("span", ["class", "separation-bar"], [Data "|"])
-
-let html_of_language (lang, url) =
-  if url = "" then Data lang
-  else Element("a", ["href", url], [Data lang])
-
-let rec html_of_languages = function
-  | [] -> []
-  | [lang] -> [html_of_language lang]
-  | lang :: tl ->
-      html_of_language lang :: separation_bar :: html_of_languages tl
-
 let languages tpl langs =
-  languages tpl (html_of_languages langs)
+  languages tpl (horizontal_toolbar langs)

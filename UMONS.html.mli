@@ -1,10 +1,12 @@
 (** Some utilities related to the UMONS template. *)
 
-val toolbar : string -> t
-  (** [toobar lang] returns a template with the links of the toolbar
-      ("Annuaire",...) filled with the appropriate links according to
-      the language [lang] (must be "fr" or "en" or any other
-      abbreviation of the main university site). *)
+(* @hide toolbar *)
+val toolbar : t -> Template.Path.t -> string -> t
+  (** [toobar tpl path contact_link] returns a template with the links
+      of the toolbar ("Annuaire",...) appropriately filled according
+      to the language of the file pointed by the [path].
+      [contact_link] is the link to the "contact" page.  The base URL
+      is also set from [path]. *)
 
 (* @hide navigation_bar *)
 val navigation_of_path : t -> Template.Path.t -> t

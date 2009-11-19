@@ -641,7 +641,8 @@ struct
   let to_base_split p =
     (* Beware that the split version of "../" is [".."; ""] (but the
        split of ".." is [".."]). *)
-    List.fold_left (fun p _ -> ".." :: p) [""] p.rev_from_base
+    if p.rev_from_base = [] then []
+    else List.fold_left (fun p _ -> ".." :: p) [""] p.rev_from_base
 
   (* Use "/" to separate components because they are supported on
      windows and are mandatory for HTML paths *)
@@ -678,11 +679,15 @@ struct
     try get_title "" (read_html fname)
     with Sys_error _ -> ""
 
-  let lang_re = Str.regexp "\\([a-zA-Z_ ]+\\)\\(\\.[a-z]+\\).html"
+  let lang_re = Str.regexp "\\([a-zA-Z_ ]+\\)\\(\\.\\([a-z]+\\)\\).html"
   let base_and_lang_of_filename f =
     if Str.string_match lang_re f 0 then
       Str.matched_group 1 f, Str.matched_group 2 f
     else (try Filename.chop_extension f with _ -> f), ""
+
+  let language p =
+    let f = filename p in
+    if Str.string_match lang_re f 0 then Str.matched_group 3 f else ""
 
   (* Add a relative path from the directory pointed by [p] to each
      path component. *)
@@ -718,10 +723,18 @@ struct
       else (let title = title_of_file (full p) in
             [(if title = "" then String.capitalize fbase else title), ""]) in
     let index = "/index" ^ lang ^ ".html" in
+    (* Look at index file, if any, to decide the name of the path components. *)
     List.fold_left begin fun acc (name, path, rev) ->
       let title = title_of_file (path ^ index) in
       ((if title = "" then String.capitalize name else title), rev) :: acc
     end final_file nav
+
+  (*
+   * Links for translations
+   *)
+
+  let translations p =
+    []
 
   (*
    * Recursively browse dirs

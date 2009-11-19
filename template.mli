@@ -120,6 +120,11 @@ sig
     (** Returns a path that can be used to open the file (or query the
         directory). *)
 
+  val language : t -> string
+    (** [language p] returns the language of the file pointed by [p]
+        or [""] if none is present (default language ir drectory).
+        The filename is expected to be of the type [name.<lang>.html]. *)
+
   val navigation : t -> base:string -> (string * string) list
     (** [navigation p base] returns the navigation information for the
         path [p].  It consists of a list of pairs [(name, path)] where
