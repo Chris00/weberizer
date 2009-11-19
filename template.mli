@@ -102,8 +102,7 @@ sig
 
   val from_base_split : t -> string list
     (** The path to the filename relative to the base directory
-        splitted into its components (the filename, if any, being
-        excluded).  Returns [[]] if we are in the base directory. *)
+        splitted into its components (see [Neturl] for the precise format). *)
 
   val filename : t -> string
     (** The filename the path points to.  The path designates a
@@ -120,6 +119,21 @@ sig
   val full : t -> string
     (** Returns a path that can be used to open the file (or query the
         directory). *)
+
+  val navigation : t -> base:string -> (string * string) list
+    (** [navigation p base] returns the navigation information for the
+        path [p].  It consists of a list of pairs [(name, path)] where
+        [name] is a descriptive name of that directory of the path and
+        [path] is the relative link to go from the location pointed by
+        [p] to the directory.  [base] is the description of the base
+        directory (unless it contains an index file with a title --
+        see below).  If [filename p] is of the form index.*.html, then
+        only its directory is included in the navigation information.
+
+        Descriptive names are based on the name of the directory or,
+        if an index.<lang>.html file is present it is taken as its
+        title (if any).  <lang> is determined according to the file
+        pointed by [p] (if of the form name.<lang>.html). *)
 end
 
 val iter_html : ?default_lang:string -> ?filter:(Path.t -> bool) ->

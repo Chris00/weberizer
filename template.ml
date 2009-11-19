@@ -624,16 +624,24 @@ struct
     filename : string;
   }
 
-  let make base = {
-    base = base;
-    from_base = "";  rev_from_base = [];  to_base = "";
-    filename = "" }
+  let make base =
+    let len = String.length base in
+    let base =
+      if len > 0 && base.[len - 1] = '/' then String.sub base 0 (len - 1)
+      else base in
+    { base = base;
+      from_base = "";  rev_from_base = [];  to_base = "";
+      filename = "" }
 
-  let from_base p = p.from_base
-  let from_base_split p = List.rev p.rev_from_base
-  let to_base p = p.to_base
-  let to_base_split p = List.rev_map (fun _ -> "..") p.rev_from_base
   let filename p = p.filename
+  let from_base p = p.from_base
+  let from_base_split p = List.rev (filename p :: p.rev_from_base)
+  let to_base p = p.to_base
+
+  let to_base_split p =
+    (* Beware that the split version of "../" is [".."; ""] (but the
+       split of ".." is [".."]). *)
+    List.fold_left (fun p _ -> ".." :: p) [""] p.rev_from_base
 
   (* Use "/" to separate components because they are supported on
      windows and are mandatory for HTML paths *)
@@ -645,6 +653,79 @@ struct
   let full p =
     let f = filename p in
     if f = "" then full_path p else concat (full_path p) f
+
+  (*
+   * Titles for navigation.
+   *)
+
+  let rec concat_data c =
+    String.concat "" (List.map data c)
+  and data = function
+    | Nethtml.Data s -> s
+    | Nethtml.Element(_, _, c) -> concat_data c
+
+  (* Retrieve the <title> of HTML.  We use "^" to concatenate titles
+     because we expect few of them (only one). *)
+  let rec get_title acc html =
+    List.fold_left get_title_el acc html
+  and get_title_el acc e = match e with
+    | Nethtml.Element("title", _, content) -> concat_data content ^ acc
+    | Nethtml.Element(_, _, content) -> get_title acc content
+    | Nethtml.Data _ -> acc
+
+  (* Retrieve the <title> of fname (returns [""] if none is found). *)
+  let title_of_file fname =
+    try get_title "" (read_html fname)
+    with Sys_error _ -> ""
+
+  let lang_re = Str.regexp "\\([a-zA-Z_ ]+\\)\\(\\.[a-z]+\\).html"
+  let base_and_lang_of_filename f =
+    if Str.string_match lang_re f 0 then
+      Str.matched_group 1 f, Str.matched_group 2 f
+    else (try Filename.chop_extension f with _ -> f), ""
+
+  (* Add a relative path from the directory pointed by [p] to each
+     path component. *)
+  let rec add_to_dir_loop ~base ~basep acc child p = match p with
+    | [] -> (base, basep, child ^ "../") :: acc
+    | d :: tl ->
+        let to_d = child ^ "../" in
+        add_to_dir_loop ~base ~basep ((d, d, to_d) :: acc) to_d tl
+
+  let add_to_dir ~base ~basep p = match p with
+    | [] -> [(base, basep, "./")]
+    | final :: tl -> add_to_dir_loop ~base ~basep [(final, final, "./")] "./" tl
+
+  (* Add a full path the each component of [p] to be able to see
+     whether there is an index file in the component dir. *)
+  let rec add_from_base_loop acc from_base p = match p with
+    | [] -> acc
+    | (name, d, to_d) :: subdirs ->
+        let from_base = from_base ^ "/" ^ d in
+        add_from_base_loop ((name, from_base, to_d) :: acc) from_base subdirs
+
+  let add_from_base = function
+    | [] -> []
+    | ((_, basep, _) as base) :: tl -> add_from_base_loop [base] basep tl
+
+  let navigation p ~base =
+    if filename p = "" then invalid_arg "Template.Path.navigation: no filename";
+    let fbase, lang = base_and_lang_of_filename (filename p) in
+    (* Assume [p.base] does not end with "/". *)
+    let nav = add_from_base(add_to_dir ~base ~basep:p.base p.rev_from_base) in
+    let final_file =
+      if fbase = "index" then []
+      else (let title = title_of_file (full p) in
+            [(if title = "" then String.capitalize fbase else title), ""]) in
+    let index = "/index" ^ lang ^ ".html" in
+    List.fold_left begin fun acc (name, path, rev) ->
+      let title = title_of_file (path ^ index) in
+      ((if title = "" then String.capitalize name else title), rev) :: acc
+    end final_file nav
+
+  (*
+   * Recursively browse dirs
+   *)
 
   let concat_dir p dir =
     assert(filename p = ""); (* [p] is supposed to represent a dir *)
@@ -803,6 +884,5 @@ and apply_relative_url_element base = function
   | Nethtml.Data _ as e -> e
 
 let relative_url_are_from_base p html =
-  (* FIXME: Neturl.apply_relative_url eats one ".." -- mail sent to Gerd. *)
-  let base = make_url ~path:(".." :: Path.to_base_split p) ip_url_syntax in
+  let base = make_url ~path:(Path.to_base_split p) ip_url_syntax in
   apply_relative_url base html

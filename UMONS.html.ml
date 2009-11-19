@@ -13,30 +13,6 @@ let separation url_base =
           [Element("img", ["src", url_base ^ "images/right_arrow.png";
                            "alt", "&gt;"], [])])
 
-(* For a path [p] possibly including a final file (which we are
-   displaying), add the path to go to each directory of the path from
-   its final location. *)
-let rec add_rev_path p maybe_final_file = match p, maybe_final_file with
-  | [], None -> []
-  | [], Some fname -> [(fname, fname)]
-  | [dir], None -> [(dir, ".")]
-  | [dir], Some fname -> [(dir, "."); (fname, fname)]
-  | dir :: tl, _ ->
-      let p = add_rev_path tl maybe_final_file in
-      (dir, concat_path (snd(List.hd p)) "../") :: p
-
-let hierarchy_of_path t path =
-  let institut = Get.title t in
-  let fname = Template.Path.filename path in
-  let p = institut :: Neturl.split_path (Template.Path.from_base path) in
-  let p =
-    if fname = "index.html" || fname = "index.htm" then add_rev_path p None
-    else
-      (* FIXME: use the <title> in the file if there is one *)
-      let title = try Filename.chop_extension fname with _ -> fname in
-      add_rev_path p (Some(String.capitalize title)) in
-  List.map (fun (a,p) -> (String.capitalize a, p)) p
-
 let rec transform_path sep p = match p with
   | [] -> []
   | [(a, _)] -> [sep; Data a]
@@ -47,7 +23,7 @@ let rec transform_path sep p = match p with
 let navigation_of_path tpl p =
   Set.navigation_bar tpl begin fun t ->
     let sep = separation (Get.url_base t) in
-    transform_path sep (hierarchy_of_path t p)
+    transform_path sep (Template.Path.navigation p ~base:(Get.title t))
   end
 
 
@@ -81,7 +57,7 @@ let rec list_last_element = function
 
 let bbclone tpl p =
   Set.web_counter tpl begin fun t ->
-    let nav = hierarchy_of_path t p in
+    let nav = Template.Path.navigation p ~base:(Get.title t) in
     let name, _ = list_last_element nav in
     (* HACK: "<?" is not supported by Nethtml, we use the fact that no
        escaping is done when printing Data values. *)
