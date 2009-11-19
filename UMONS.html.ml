@@ -95,6 +95,9 @@ let bbclone tpl p =
     (* HACK: "<?" is not supported by Nethtml, we use the fact that no
        escaping is done when printing Data values. *)
     [Data(sprintf "<?php
+        @apache_setenv('no-gzip', 1);
+        @ini_set('zlib.output_compression', 0);
+        @ini_set('implicit_flush', 1);
 	define(\"_BBC_PAGE_NAME\", %S);
 	define(\"_BBCLONE_DIR\", %S . \"../bbclone/\");
 	define(\"COUNTER\", _BBCLONE_DIR.\"mark_page.php\");
