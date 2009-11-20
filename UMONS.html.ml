@@ -48,37 +48,40 @@ let rec horizontal_toolbar = function
   | [item] -> [html_of_item item]
   | item :: tl -> html_of_item item :: separation_bar :: horizontal_toolbar tl
 
-let toolbar_fr contact =
+let toolbar_fr contact map =
   let admin = sprintf "http://portail.umons.ac.be/FR/universite/admin" in
   ["Annuaire", "http://telephone.umh.ac.be/reppersumons/REPPERSlist.asp";
    "Bibliothèques", "http://w3.umh.ac.be/Bibli/sms.htm";
    "Cours en ligne",
    "https://applications.umons.ac.be/moodleumh/course/category.php?id=2";
-   "Plan d'accès",
-   (admin ^ "/scrp/plancampus/Pages/CampusSciencesMédecineFTI-EII.aspx");
+   "Plan d'accès", map;
    "Contact", contact;
    "Emploi", (admin ^ "/drh/emploi/Pages/Emploi.aspx");
    "Agenda", (admin ^ "/scrp/Pages/Agenda.aspx") ]
 
-let toolbar_en contact =
+let toolbar_en contact map =
   let admin = sprintf "http://portail.umons.ac.be/EN/universite/admin" in
   ["Directory", "http://telephone.umh.ac.be/reppersumons/REPPERSlist.asp";
    "Libraries", "http://w3.umh.ac.be/Bibli/sms.htm";
    "E-learning",
    "https://applications.umons.ac.be/moodleumh/course/category.php?id=2";
-   "Directions",
-   (admin ^ "/scrp/plancampus/Pages/CampusSciencesMédecineFTI-EII.aspx");
+   "Directions", map;
    "Contact", contact;
    "Jobs", (admin ^ "/drh/emploi/Pages/Emploi.aspx");
    "Agenda", (admin ^ "/scrp/Pages/Agenda.aspx") ]
 
-let toolbar tpl p contact =
+let toolbar tpl ?contact ?map p =
   let l = String.lowercase(Template.Path.language p) in
   let tpl = lang tpl l in
-  let tpl = url_base tpl (Template.Path.to_base p) in
+  let base = Template.Path.to_base p in
+  let tpl = url_base tpl base in
+  let contact = match contact with
+    | None -> base ^ "contact/" | Some c -> c in
+  let map = match map with
+    | None -> base ^ "contact/acces.html#maps" | Some m -> m in
   let bar = match l with
-    | "en" -> horizontal_toolbar (toolbar_en contact)
-    | "fr" | "" -> horizontal_toolbar (toolbar_fr contact)
+    | "en" -> horizontal_toolbar (toolbar_en contact map)
+    | "fr" | "" -> horizontal_toolbar (toolbar_fr contact map)
     | _ -> failwith "UMONS.toolbar: language not recognized" in
   toolbar tpl bar
 
