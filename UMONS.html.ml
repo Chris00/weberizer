@@ -23,7 +23,7 @@ let rec transform_path sep p = match p with
 let navigation_of_path tpl p =
   Set.navigation_bar tpl begin fun t ->
     let sep = separation_arrow (Get.url_base t) in
-    transform_path sep (Template.Path.navigation p ~base:(Get.title t))
+    transform_path sep (Template.Path.navigation p)
   end
 
 
@@ -93,7 +93,7 @@ let rec list_last_element = function
 
 let bbclone tpl p =
   Set.web_counter tpl begin fun t ->
-    let nav = Template.Path.navigation p ~base:(Get.title t) in
+    let nav = Template.Path.navigation p in
     let name, _ = list_last_element nav in
     (* HACK: "<?" is not supported by Nethtml, we use the fact that no
        escaping is done when printing Data values. *)

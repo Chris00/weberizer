@@ -616,44 +616,62 @@ let body_of html =
 
 module Path =
 struct
+  (* Constructing navigation bars will request again and again the
+     name associated to a directory in a given language.  In order not
+     to access the disk too frequently, one caches this information. *)
   type t = {
-    base : string;
-    from_base : string;
-    rev_from_base : string list;
-    to_base : string;
-    filename : string;
+    name : string;       (* the name of the directory/file *)
+    is_dir : bool;       (* whether this path component is a dir *)
+    full_path : string;  (* full path to the dir/file (included) *)
+    from_base : string;  (* relative path from base *)
+    to_base : string;    (* relative path from the dir to the base,
+                            ends with '/'. *)
+    parent : t option; (* the parent dir, or [None] if base dir *)
+    mutable desc : (string * string) list;
+    (* cache; associative list: lang -> descriptive name *)
   }
+
+  (** Apply [f] to all components of the path [p] exept the base one. *)
+  let rec fold_left f a p = match p.parent with
+    | None -> a (* base dir *)
+    | Some d -> fold_left f (f a p) d
 
   let make base =
     let len = String.length base in
     let base =
       if len > 0 && base.[len - 1] = '/' then String.sub base 0 (len - 1)
       else base in
-    { base = base;
-      from_base = "";  rev_from_base = [];  to_base = "";
-      filename = "" }
+    { name  = Filename.basename base;  is_dir = true;
+      full_path = base;  from_base = "";
+      to_base = "./"; (* must end with "/" *)
+      parent = None;  desc = [] }
 
-  let filename p = p.filename
+  let filename p = p.name (* may be the dir name, but only files will
+                             be given to the library user. *)
   let from_base p = p.from_base
-  let from_base_split p = List.rev (filename p :: p.rev_from_base)
+
+  let rec from_base_split_loop acc p = match p.parent with
+    | None -> acc (* base dir, not in path *)
+    | Some d -> from_base_split_loop (p.name :: acc) d
+
+  let from_base_split p = from_base_split_loop [] p
+
   let to_base p = p.to_base
 
-  let to_base_split p =
-    (* Beware that the split version of "../" is [".."; ""] (but the
-       split of ".." is [".."]). *)
-    if p.rev_from_base = [] then []
-    else List.fold_left (fun p _ -> ".." :: p) [""] p.rev_from_base
+  let to_base_split p = match p.parent with
+      (* Beware that the split version of "../" is [".."; ""] (but the
+         split of ".." is [".."]). *)
+    | None -> [] (* in base dir *)
+    | Some d ->
+        (* Ignore the last component considered to be a filename. *)
+        fold_left (fun acc _ -> ".." :: acc) [""] d
 
   (* Use "/" to separate components because they are supported on
      windows and are mandatory for HTML paths *)
   let concat dir file =
     if dir = "" then file else dir ^ "/" ^ file
 
-  let full_path p = concat p.base (from_base p)
-
-  let full p =
-    let f = filename p in
-    if f = "" then full_path p else concat (full_path p) f
+  let full p = p.full_path
 
   (*
    * Titles for navigation.
@@ -679,55 +697,65 @@ struct
     try get_title "" (read_html fname)
     with Sys_error _ -> ""
 
-  let lang_re = Str.regexp "\\([a-zA-Z_ ]+\\)\\(\\.\\([a-z]+\\)\\).html"
+  let lang_re = Str.regexp "\\([a-zA-Z_ ]+\\)\\(\\.\\([a-z]+\\)\\)?\\.html"
   let base_and_lang_of_filename f =
     if Str.string_match lang_re f 0 then
-      Str.matched_group 1 f, Str.matched_group 2 f
+      Str.matched_group 1 f, (try Str.matched_group 3 f with _ -> "")
     else (try Filename.chop_extension f with _ -> f), ""
 
   let language p =
     let f = filename p in
-    if Str.string_match lang_re f 0 then Str.matched_group 3 f else ""
+    if Str.string_match lang_re f 0 then
+      (try Str.matched_group 3 f with _ -> "")
+    else ""
 
-  (* Add a relative path from the directory pointed by [p] to each
-     path component. *)
-  let rec add_to_dir_loop ~base ~basep acc child p = match p with
-    | [] -> (base, basep, child ^ "../") :: acc
-    | d :: tl ->
-        let to_d = child ^ "../" in
-        add_to_dir_loop ~base ~basep ((d, d, to_d) :: acc) to_d tl
+  (** Returns the descriptive name of the file/dir pointed by [p] for
+      the language [lang]. *)
+  let description_lang p lang =
+    try List.assoc lang p.desc
+    with Not_found ->
+      let desc =
+        if p.is_dir then
+          (* Directory, look for index.<lang>.html *)
+          let index = p.full_path ^ (if lang = "" then "/index.html"
+                                     else "/index." ^ lang ^ ".html") in
+          let title = title_of_file index in
+          if title = "" then String.capitalize p.name else title
+        else
+          let title = title_of_file p.full_path in
+          if title = "" then
+            let base, _ = base_and_lang_of_filename p.name in
+            String.capitalize base
+          else title in
+      p.desc <- (lang, desc) :: p.desc;
+      desc
 
-  let add_to_dir ~base ~basep p = match p with
-    | [] -> [(base, basep, "./")]
-    | final :: tl -> add_to_dir_loop ~base ~basep [(final, final, "./")] "./" tl
+  let description p =
+    if p.is_dir then invalid_arg "Template.Path.navigation: no filename";
+    let _, lang = base_and_lang_of_filename (filename p) in
+    description_lang p lang
 
-  (* Add a full path the each component of [p] to be able to see
-     whether there is an index file in the component dir. *)
-  let rec add_from_base_loop acc from_base p = match p with
-    | [] -> acc
-    | (name, d, to_d) :: subdirs ->
-        let from_base = from_base ^ "/" ^ d in
-        add_from_base_loop ((name, from_base, to_d) :: acc) from_base subdirs
+  (* [from_last_dir] is a relative path from the final directory
+     pointed by [p] to each path component. *)
+  let rec navigation_dir from_last_dir acc p lang = match p.parent with
+    | None -> (description_lang p lang, from_last_dir) :: acc (* base dir *)
+    | Some d ->
+        let from_d = from_last_dir ^ "../" in
+        let acc = (description_lang p lang, from_last_dir) :: acc in
+        navigation_dir from_d acc d lang
 
-  let add_from_base = function
-    | [] -> []
-    | ((_, basep, _) as base) :: tl -> add_from_base_loop [base] basep tl
-
-  let navigation p ~base =
-    if filename p = "" then invalid_arg "Template.Path.navigation: no filename";
-    let fbase, lang = base_and_lang_of_filename (filename p) in
-    (* Assume [p.base] does not end with "/". *)
-    let nav = add_from_base(add_to_dir ~base ~basep:p.base p.rev_from_base) in
-    let final_file =
-      if fbase = "index" then []
-      else (let title = title_of_file (full p) in
-            [(if title = "" then String.capitalize fbase else title), ""]) in
-    let index = "/index" ^ lang ^ ".html" in
-    (* Look at index file, if any, to decide the name of the path components. *)
-    List.fold_left begin fun acc (name, path, rev) ->
-      let title = title_of_file (path ^ index) in
-      ((if title = "" then String.capitalize name else title), rev) :: acc
-    end final_file nav
+  let navigation p =
+    if p.is_dir then invalid_arg "Template.Path.navigation: no filename";
+    match p.parent with
+    | None -> assert false (* a file must have a parent dir, possibly
+                             the base one *)
+    | Some d ->
+        let fbase, lang = base_and_lang_of_filename (filename p) in
+        let file_nav =
+          if fbase = "index" then []
+          else [(description_lang p lang, "")] (* "" is the relative link
+                                                  to the current file *) in
+        navigation_dir "./" file_nav d lang
 
   (*
    * Links for translations
@@ -741,20 +769,27 @@ struct
    *)
 
   let concat_dir p dir =
-    assert(filename p = ""); (* [p] is supposed to represent a dir *)
-    { p with
-        from_base = concat p.from_base dir;
-        rev_from_base = dir :: p.rev_from_base;
-        to_base = concat ".." p.to_base;
-        (* FIXME: will end with "/", wanted?? certainly used! *)
+    assert(p.is_dir);
+    { name = dir;  is_dir = true;
+      full_path = concat p.full_path dir;
+      from_base = concat p.from_base dir;
+      to_base = "../" ^ p.to_base; (* must end with '/' *)
+      parent = Some p;
+      desc = [];
     }
 
   let concat_file p fname =
-    assert(filename p = ""); (* [p] is supposed to represent a dir *)
-    { p with filename = fname; }
+    assert(p.is_dir);
+    { name = fname;  is_dir = false;
+      full_path = concat p.full_path fname;
+      from_base = p.from_base; (* FIXME: no file? Remove?? *)
+      to_base = p.to_base; (* must end with '/' *)
+      parent = Some p;
+      desc = [];
+    }
 
   let rec iter_files ~filter_dir ~filter_file p f =
-    let full_path = full_path p in
+    let full_path = full p in
     let files = Sys.readdir full_path in
     for i = 0 to Array.length files - 1 do
       let file = files.(i) in

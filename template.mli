@@ -96,13 +96,14 @@ sig
     (** Path relative to a base directory. *)
 
   val from_base : t -> string
-    (** The (normalized) path to the filename (the filename, if any,
-        being excluded) relative to the base directory.  Returns [""]
-        if we are in the base directory. *)
+    (** The (normalized) path to the filename (the filename being
+        excluded) relative to the base directory.  Returns [""] if we
+        are in the base directory. *)
 
   val from_base_split : t -> string list
-    (** The path to the filename relative to the base directory
-        splitted into its components (see [Neturl] for the precise format). *)
+    (** The path to the filename (including it) relative to the base
+        directory splitted into its components (see [Neturl] for the
+        precise format). *)
 
   val filename : t -> string
     (** The filename the path points to.  The path designates a
@@ -125,15 +126,18 @@ sig
         or [""] if none is present (default language ir drectory).
         The filename is expected to be of the type [name.<lang>.html]. *)
 
-  val navigation : t -> base:string -> (string * string) list
-    (** [navigation p base] returns the navigation information for the
-        path [p].  It consists of a list of pairs [(name, path)] where
+  val description : t -> string
+    (** [description p] returns the descriptive name for the file
+        pointed by [p]. *)
+
+  val navigation : t -> (string * string) list
+    (** [navigation p] returns the navigation information for the path
+        [p].  It consists of a list of pairs [(name, path)] where
         [name] is a descriptive name of that directory of the path and
         [path] is the relative link to go from the location pointed by
-        [p] to the directory.  [base] is the description of the base
-        directory (unless it contains an index file with a title --
-        see below).  If [filename p] is of the form index.*.html, then
-        only its directory is included in the navigation information.
+        [p] to the directory.  If [filename p] is of the form
+        index.*.html, then only its directory is included in the
+        navigation information.
 
         Descriptive names are based on the name of the directory or,
         if an index.<lang>.html file is present it is taken as its
