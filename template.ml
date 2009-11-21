@@ -457,6 +457,8 @@ let compile_html ?trailer_ml ?trailer_mli ?(hide=[]) ?module_name fname =
 let content_of_file file =
   let fh = open_in file in
   let buf = Buffer.create 500 in
+  (* Add a dirrective to refer to the original file for errors *)
+  Buffer.add_string buf ("# 1 \"" ^ String.escaped file ^ "\"\n");
   try
     while true do
       Buffer.add_string buf (input_line fh);
@@ -471,8 +473,17 @@ let content_of_file file =
 let maybe_content file =
   if Sys.file_exists file then Some(content_of_file file) else None
 
+let copy_newlines s =
+  let buf = Buffer.create 16 in
+  for i = Str.match_beginning() to Str.match_end() - 1 do
+    if s.[i] = '\n' || s.[i] = '\r' then Buffer.add_char buf s.[i]
+  done;
+  Buffer.contents buf
+
 (* Looks for variable names to hide in the mli, declared with "@hide
-   var" or "@replace var". *)
+   var".  One must preserve the number of lines the comment is using
+   in order for the errors to point to the correct location in the
+   original file. *)
 let hide_re = Str.regexp "(\\* *@hide +\\([a-zA-Z_]+\\) *\\*) *\n?"
 let vars_to_hide mli =
   match mli with
@@ -488,7 +499,7 @@ let vars_to_hide mli =
         done;
         assert false
       with Not_found ->
-        !acc, Some(Str.global_replace hide_re "" mli)
+        !acc, Some(Str.global_substitute hide_re copy_newlines mli)
 
 let compile f =
   let trailer_ml = maybe_content (f ^ ".ml") in

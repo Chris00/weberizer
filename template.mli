@@ -6,9 +6,10 @@ type html = Nethtml.document list
 val compile_html :
   ?trailer_ml:string -> ?trailer_mli:string -> ?hide:string list ->
   ?module_name:string -> string -> unit
-  (** [compile_html fname] reads the HTML template file [fname] and
-      creates an OCaml module with functions to fill the variables of
-      the template.  The module will be in files [module_name].ml and
+  (** [compile_html fname] reads the HTML template file [fname]
+      (typically a file with extension ".html") and creates an OCaml
+      module with functions to fill the variables of the template.
+      The module will be in files [module_name].ml and
       [module_name].mli.
 
       @param module_name the name of the generated module.  By
@@ -32,11 +33,13 @@ val compile_html :
       variables are used in [trailer_ml] functions. *)
 
 val compile : string -> unit
-  (** [compile_file fname] does the same as [compile_html] except that
+  (** [compile fname] does the same as [compile_html] except that
       trailer code is taken from [fname].ml and [fname].mli for the
       implementation and interface respectively.  Moreover, to hide
-      the signature of a template variable, say "var", one must add a
-      comment [(* @hide var *)] in [fname].mli *)
+      the signature of a template variable, say "var", one can add a
+      comment [(* @hide var *)] in [fname].mli.  Special annotations
+      are added to the generated module implementation and interface
+      so errors point back to [fname].ml and [fname].mli respectively. *)
 
 
 module Binding :
