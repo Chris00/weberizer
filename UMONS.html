@@ -3,7 +3,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1" />
-    <title >UMONS / ${title}</title>
+    <title >UMONS | ${title}</title>
     <meta name="author" content="Christophe Troestler" />
     <meta name="description"
 	  content="Site du Département de Mathématique de l'Université de Mons [Site of the Mathematics Department of Mons University]" />
@@ -19,7 +19,7 @@
     <meta name="geo.placename" content="Mons, Hainaut, Belgium" />
     <meta name="geo.position" content="52;6" />
     <meta name="geo.region" content="BE-WHT" />
-    <meta name="robots" content="all"/ >
+    <meta name="robots" content="all" />
   </head>
   <body>
     <div class="horizontal-line">
@@ -48,9 +48,9 @@
       <form class="search-box" method="get"
 	    action="http://www.google.com/search">
 	<div>
-	  <input type="text" name="q" value="Rechercher..."
-		 onblur="if(this.value=='') this.value='Rechercher...';"
-		 onfocus="if(this.value=='Rechercher...') this.value='';"
+	  <input type="text" name="q" value="${search_name}..."
+		 onblur="if(this.value=='') this.value='${search_name}...';"
+		 onfocus="if(this.value=='${search_name}...') this.value='';"
 		 />
 	  <input type="hidden" name="as_sitesearch"
 		 value="${web_host}" />
