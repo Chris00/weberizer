@@ -1,8 +1,8 @@
 (** Some utilities related to the UMONS template. *)
 
 (* @hide toolbar *)
-val toolbar : t -> ?contact:string -> ?map:string -> ?default_lang:string ->
-  Template.Path.t -> t
+val toolbar : t -> ?contact:string -> ?map:string ->
+  lang:string -> Template.Path.t -> t
   (** [toobar tpl path contact_link] returns a template with the links
       of the toolbar ("Annuaire",...) appropriately filled according
       to the language of the file pointed by the [path].

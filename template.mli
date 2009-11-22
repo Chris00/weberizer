@@ -124,11 +124,6 @@ sig
     (** Returns a path that can be used to open the file (or query the
         directory). *)
 
-  val language : t -> string
-    (** [language p] returns the language of the file pointed by [p]
-        or [""] if none is present (default language ir drectory).
-        The filename is expected to be of the type [name.<lang>.html]. *)
-
   val description : t -> string
     (** [description p] returns the descriptive name for the file
         pointed by [p]. *)
@@ -148,17 +143,24 @@ sig
         pointed by [p] (if of the form name.<lang>.html). *)
 end
 
-val iter_html : ?default_lang:string -> ?filter:(Path.t -> bool) ->
-  string -> (Path.t -> html) -> unit
-  (** [iter_html base f] iterates [f file] on all HTML files under
-      [base] (the argument of [f] is guaranteed to be a path to a
-      file).  @raise Invalid_argument if [base] is not a directory.
+val iter_html : ?langs:string list -> ?filter:(Path.t -> bool) ->
+  string -> (string -> Path.t -> html) -> unit
+  (** [iter_html base f] iterates [f lang file] on all HTML files
+      under [base] (the argument of [f] is guaranteed to be a path to
+      a file).  The resulting HTML code is written under the directory
+      [lang], the subpath begin the relative path of the file
+      w.r.t. [base] and the filename is the original one with the
+      language removed.  @raise Invalid_argument if [base] is not a
+      directory.
+
+      @param lang the accepted languages.  The first one being the
+      default one (for files that do not specify a language).
+      @raise Invalid_argument if languages are not lowercase only.
 
       @param filter examine the file of dir iff the condition [filter
       rel_dir f] holds on the relative path [rel_dir] from [root] and
-      final file or dir [f].  Default: accept all [.html] and [.php]
-      files.  Files and dirs starting with a dot are {i always}
-      excluded. *)
+      final file or dir [f].  Default: accept all [.html] files.
+      Files and dirs starting with a dot are {i always} excluded.  *)
 
 val relative_url_are_from_base : Path.t -> html -> html
   (** [relative_url_are_from_base path html] prefix all relative URLs

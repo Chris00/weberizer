@@ -70,9 +70,8 @@ let toolbar_en contact map =
    "Jobs", (admin ^ "/drh/emploi/Pages/Emploi.aspx");
    "Agenda", (admin ^ "/scrp/Pages/Agenda.aspx") ]
 
-let toolbar tpl ?contact ?map ?(default_lang="fr") p =
-  let l = Template.Path.language p in
-  let l = String.lowercase(if l = "" then default_lang else l) in
+let toolbar tpl ?contact ?map ~lang:l p =
+  let l = String.lowercase l in
   let tpl = lang tpl l in
   let base = Template.Path.to_base p in
   let tpl = url_base tpl base in
@@ -113,4 +112,5 @@ let bbclone tpl p =
   end
 
 let languages tpl langs =
+  let langs = List.map (fun (n,u) -> (String.capitalize n, u)) langs in
   languages tpl (horizontal_toolbar langs)

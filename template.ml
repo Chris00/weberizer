@@ -661,6 +661,10 @@ struct
                              be given to the library user. *)
   let from_base p = p.from_base
 
+  let parent p = match p.parent with
+    | None -> failwith "Template.Path.parent: Base directory, no parent"
+    | Some d -> d
+
   let rec from_base_split_loop acc p = match p.parent with
     | None -> acc (* base dir, not in path *)
     | Some d -> from_base_split_loop (p.name :: acc) d
@@ -679,11 +683,6 @@ struct
         | Some _ ->
             (* Ignore the component [p] considered to be a filename. *)
             fold_left (fun acc _ -> ".." :: acc) [""] d
-
-  (* Use "/" to separate components because they are supported on
-     windows and are mandatory for HTML paths *)
-  let concat dir file =
-    if dir = "" then file else dir ^ "/" ^ file
 
   let full p = p.full_path
 
@@ -714,13 +713,14 @@ struct
   let lang_re = Str.regexp "\\([a-zA-Z_ ]+\\)\\(\\.\\([a-z]+\\)\\)?\\.html"
   let base_and_lang_of_filename f =
     if Str.string_match lang_re f 0 then
-      Str.matched_group 1 f, (try Str.matched_group 3 f with _ -> "")
+      (Str.matched_group 1 f,
+       try String.lowercase(Str.matched_group 3 f) with _ -> "")
     else (try Filename.chop_extension f with _ -> f), ""
 
   let language p =
     let f = filename p in
     if Str.string_match lang_re f 0 then
-      (try Str.matched_group 3 f with _ -> "")
+      (try String.lowercase(Str.matched_group 3 f) with _ -> "")
     else ""
 
   (** Returns the descriptive name of the file/dir pointed by [p] for
@@ -782,6 +782,13 @@ struct
    * Recursively browse dirs
    *)
 
+  (* Use "/" to separate components because they are supported on
+     windows and are mandatory for HTML paths *)
+  let concat dir file =
+    if dir = "" then file
+    else if file = "" then dir
+    else dir ^ "/" ^ file
+
   let concat_dir p dir =
     assert(p.is_dir);
     { name = dir;  is_dir = true;
@@ -796,7 +803,7 @@ struct
     assert(p.is_dir);
     { name = fname;  is_dir = false;
       full_path = concat p.full_path fname;
-      from_base = p.from_base; (* FIXME: no file? Remove?? *)
+      from_base = p.from_base; (* no file *)
       to_base = p.to_base; (* must end with '/' *)
       parent = Some p;
       desc = [];
@@ -826,19 +833,31 @@ let rec mkdir_if_absent ?(perm=0o750) dir =
     Unix.mkdir dir perm
   end
 
-let iter_html ?(default_lang="Fr") ?(filter=(fun _ -> true)) base f =
-  if not(Sys.is_directory base) then invalid_arg "Template.iter_files";
-  let output_dir = String.lowercase default_lang in
-  let filter_dir p = Path.from_base p <> output_dir
-  and filter_file p =
-    Filename.check_suffix (Path.filename p) ".html" && filter p in
-  mkdir_if_absent output_dir;
-  Path.iter_files ~filter_file ~filter_dir (Path.make base) begin fun p ->
-    let html = f p in
-    let dir = Filename.concat output_dir (Path.from_base p) in
-    mkdir_if_absent dir;
-    write_html html (Filename.concat dir (Path.filename p))
-  end
+let only_lower = Str.regexp "[a-z]+$"
+let check_lang l =
+  if not(Str.string_match only_lower l 0) then
+    invalid_arg(sprintf "Template.iter_html: language %S not valid" l)
+
+let iter_html ?(langs=["fr"]) ?(filter=(fun _ -> true)) base f =
+  if not(Sys.is_directory base) then
+    invalid_arg "Template.iter_html: the base must be a directory";
+  match langs with
+  | [] -> invalid_arg "Template.iter_html: langs must be <> []"
+  | default_lang :: _ ->
+      List.iter check_lang langs;
+      let filter_dir p = not(List.mem (Path.from_base p) langs)
+      and filter_file p =
+        Filename.check_suffix (Path.filename p) ".html" && filter p in
+      Path.iter_files ~filter_file ~filter_dir (Path.make base) begin fun p ->
+        let fbase, lang = Path.base_and_lang_of_filename (Path.filename p) in
+        let lang = if lang = "" then default_lang else lang in
+        if List.mem lang langs then begin
+          let html = f lang p in
+          let dir = Path.concat lang (Path.from_base p) in
+          mkdir_if_absent dir;
+          write_html html (Filename.concat dir (fbase ^ ".html"))
+        end
+      end
 
 
 let quote_quot_re = Str.regexp_string "\"";;
