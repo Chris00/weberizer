@@ -453,12 +453,13 @@ div.news img.news_p {
 
 .actions a {
   color: rgb(151,198,204);
-  border-bottom: dashed 1px rgb(151,198,204);
+  border-bottom: dotted 1px rgb(151,198,204);
 }
 
 .actions a:hover {
   background: #fffea8;
   color: rgb(176,11,58);
+  border-bottom: solid 1px #fffea8;
 }
 
 @media print {
