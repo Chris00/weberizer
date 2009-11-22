@@ -1,7 +1,8 @@
 (** Some utilities related to the UMONS template. *)
 
 (* @hide toolbar *)
-val toolbar : t -> ?contact:string -> ?map:string -> Template.Path.t -> t
+val toolbar : t -> ?contact:string -> ?map:string -> ?default_lang:string ->
+  Template.Path.t -> t
   (** [toobar tpl path contact_link] returns a template with the links
       of the toolbar ("Annuaire",...) appropriately filled according
       to the language of the file pointed by the [path].
@@ -27,8 +28,8 @@ val bbclone : t -> Template.Path.t -> t
 
 (* @hide languages *)
 val languages : t -> (string * string) list -> t
-  (** [languages tpl langs] return (a vopy of) the template [tpl] with
+  (** [languages tpl langs] return (a copy of) the template [tpl] with
       the language links set according to [langs].  [langs] is a list
       of [(lang, url)] where [lang] is the name of the language and
-      [url] is the URL where the page can be found ([""] if it is the
-      current pagea). *)
+      [url] is the (relative or absolute) URL where the page can be
+      found ([""] if it is the current page). *)

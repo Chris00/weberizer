@@ -70,8 +70,9 @@ let toolbar_en contact map =
    "Jobs", (admin ^ "/drh/emploi/Pages/Emploi.aspx");
    "Agenda", (admin ^ "/scrp/Pages/Agenda.aspx") ]
 
-let toolbar tpl ?contact ?map p =
-  let l = String.lowercase(Template.Path.language p) in
+let toolbar tpl ?contact ?map ?(default_lang="fr") p =
+  let l = Template.Path.language p in
+  let l = String.lowercase(if l = "" then default_lang else l) in
   let tpl = lang tpl l in
   let base = Template.Path.to_base p in
   let tpl = url_base tpl base in
@@ -83,10 +84,10 @@ let toolbar tpl ?contact ?map p =
   | "en" ->
       let tpl = toolbar tpl (horizontal_toolbar (toolbar_en contact map)) in
       search_name tpl "Search"
-  | "fr" | "" ->
+  | "fr" ->
       let tpl = toolbar tpl (horizontal_toolbar (toolbar_fr contact map)) in
       search_name tpl "Rechercher"
-  | _ -> failwith "UMONS.toolbar: language not recognized"
+  | _ -> failwith(Printf.sprintf "UMONS.toolbar: language %S not recognized" l)
 
 
 let rec list_last_element = function
