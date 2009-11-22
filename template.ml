@@ -481,7 +481,7 @@ let copy_newlines s =
   Buffer.contents buf
 
 (* Looks for variable names to hide in the mli, declared with "@hide
-   var".  One must preserve the number of lines the comment is using
+   var".  One suppresses the comment but preserve the number of lines
    in order for the errors to point to the correct location in the
    original file. *)
 let hide_re = Str.regexp "(\\* *@hide +\\([a-zA-Z_]+\\) *\\*) *\n?"
