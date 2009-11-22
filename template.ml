@@ -674,8 +674,11 @@ struct
          split of ".." is [".."]). *)
     | None -> [] (* in base dir *)
     | Some d ->
-        (* Ignore the last component considered to be a filename. *)
-        fold_left (fun acc _ -> ".." :: acc) [""] d
+        match d.parent with
+        | None -> [] (* [p] is a filename in the base directory *)
+        | Some _ ->
+            (* Ignore the component [p] considered to be a filename. *)
+            fold_left (fun acc _ -> ".." :: acc) [""] d
 
   (* Use "/" to separate components because they are supported on
      windows and are mandatory for HTML paths *)
@@ -926,9 +929,9 @@ and protect_emails_element = function
 
 let is_href (a, _) = a = "href"
 
-let apply_relative_href base ((e, url) as arg) =
+let apply_relative_href base ((href, url) as arg) =
   let url = parse_url url ~base_syntax:ip_url_syntax in
-  try (e, string_of_url(apply_relative_url base url))
+  try (href, string_of_url(Neturl.apply_relative_url base url))
   with Malformed_URL -> arg
 
 let rec apply_relative_url base html =
@@ -943,5 +946,5 @@ and apply_relative_url_element base = function
   | Nethtml.Data _ as e -> e
 
 let relative_url_are_from_base p html =
-  let base = make_url ~path:(Path.to_base_split p) ip_url_syntax in
+  let base = make_url ip_url_syntax ~path:(Path.to_base_split p) in
   apply_relative_url base html
