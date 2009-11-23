@@ -10,7 +10,8 @@ val toolbar : t -> ?contact:string -> ?map:string ->
       is also set from [path]. *)
 
 (* @hide navigation_bar *)
-val navigation_of_path : t -> Template.Path.t -> t
+val navigation_of_path : t -> ?prefix:(string * string) list ->
+  Template.Path.t -> t
   (** [navigation_of_path t path] add a navigation bar based on the
       [path]. *)
 

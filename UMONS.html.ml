@@ -20,10 +20,10 @@ let rec transform_path sep p = match p with
       let el = Element("a", ["href", rev], [Data a]) in
       sep :: el :: transform_path sep tl
 
-let navigation_of_path tpl p =
+let navigation_of_path tpl ?(prefix=[]) p =
   Set.navigation_bar tpl begin fun t ->
     let sep = separation_arrow (Get.url_base t) in
-    transform_path sep (Template.Path.navigation p)
+    transform_path sep (prefix @ Template.Path.navigation p)
   end
 
 
@@ -60,7 +60,8 @@ let toolbar_fr contact map =
    "Agenda", (admin ^ "/scrp/Pages/Agenda.aspx") ]
 
 let toolbar_en contact map =
-  let admin = sprintf "http://portail.umons.ac.be/EN/universite/admin" in
+  (* FIXME: must replace FR by EN once the main site will be translated. *)
+  let admin = sprintf "http://portail.umons.ac.be/FR/universite/admin" in
   ["Directory", "http://telephone.umh.ac.be/reppersumons/REPPERSlist.asp";
    "Libraries", "http://w3.umh.ac.be/Bibli/sms.htm";
    "E-learning",
