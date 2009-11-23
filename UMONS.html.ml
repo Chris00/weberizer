@@ -3,6 +3,12 @@
 open Printf
 open Nethtml
 
+let banner tpl ?(base=true) img =
+  Set.url_banner tpl begin fun t ->
+    if base then Get.url_base t ^ "/images/" ^ img
+    else img
+  end
+
 let concat_path p f =
   if p = "" then f
   else if p.[String.length p - 1] = '/' then p ^ f

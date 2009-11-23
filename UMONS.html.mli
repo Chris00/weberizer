@@ -1,5 +1,8 @@
 (** Some utilities related to the UMONS template. *)
 
+(* @hide url_banner *)
+val banner : t -> ?base:bool -> string -> t
+
 (* @hide toolbar *)
 val toolbar : t -> ?contact:string -> ?map:string ->
   lang:string -> Template.Path.t -> t
