@@ -141,6 +141,12 @@ sig
         if an index.<lang>.html file is present it is taken as its
         title (if any).  <lang> is determined according to the file
         pointed by [p] (if of the form name.<lang>.html). *)
+
+  val translations : langs: string list -> t -> (string * string) list
+    (** [translations langs p] returns a list of couples [(lang, url)]
+        for all translations of the file pointed by the path [p].
+        [langs] is the list of languages to examine, the first being
+        the default one (files with no explicit language). *)
 end
 
 val iter_html : ?langs:string list -> ?filter:(Path.t -> bool) ->

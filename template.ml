@@ -775,19 +775,31 @@ struct
    * Links for translations
    *)
 
-  let translations p =
-    []
-
-  (*
-   * Recursively browse dirs
-   *)
-
   (* Use "/" to separate components because they are supported on
      windows and are mandatory for HTML paths *)
   let concat dir file =
     if dir = "" then file
     else if file = "" then dir
     else dir ^ "/" ^ file
+
+  let translations ~langs p =
+    let default_lang = match langs with d :: _ -> d | [] -> "" in
+    let fbase, lang = base_and_lang_of_filename (filename p) in
+    let lang = if lang = "" then default_lang else lang in
+    let path_base = concat (from_base p) fbase ^ "." in
+    List.fold_right begin fun l trans ->
+      let ext = if l = default_lang then "html" else l ^ ".html" in
+      if Sys.file_exists(path_base ^ ext) then
+        let url =
+          if l = lang then ""
+          else sprintf "%s../%s/%shtml" (to_base p) l path_base in
+        (l, url) :: trans
+      else trans
+    end langs []
+
+  (*
+   * Recursively browse dirs
+   *)
 
   let concat_dir p dir =
     assert(p.is_dir);
