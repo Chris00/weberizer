@@ -625,6 +625,23 @@ let body_of html =
   let body = get_body_of html in
   if body = [] then html else body
 
+let rec concat_data c =
+  String.concat "" (List.map data c)
+and data = function
+  | Nethtml.Data s -> s
+  | Nethtml.Element(_, _, c) -> concat_data c
+
+(* Retrieve the <title> of HTML.  We use "^" to concatenate titles
+   because we expect few of them (only one). *)
+let rec get_title acc html =
+  List.fold_left get_title_el acc html
+and get_title_el acc e = match e with
+  | Nethtml.Element("title", _, content) -> concat_data content ^ acc
+  | Nethtml.Element(_, _, content) -> get_title acc content
+  | Nethtml.Data _ -> acc
+
+let title_of html = get_title "" html
+
 module Path =
 struct
   (* Constructing navigation bars will request again and again the
@@ -689,21 +706,6 @@ struct
   (*
    * Titles for navigation.
    *)
-
-  let rec concat_data c =
-    String.concat "" (List.map data c)
-  and data = function
-    | Nethtml.Data s -> s
-    | Nethtml.Element(_, _, c) -> concat_data c
-
-  (* Retrieve the <title> of HTML.  We use "^" to concatenate titles
-     because we expect few of them (only one). *)
-  let rec get_title acc html =
-    List.fold_left get_title_el acc html
-  and get_title_el acc e = match e with
-    | Nethtml.Element("title", _, content) -> concat_data content ^ acc
-    | Nethtml.Element(_, _, content) -> get_title acc content
-    | Nethtml.Data _ -> acc
 
   (* Retrieve the <title> of fname (returns [""] if none is found). *)
   let title_of_file fname =

@@ -93,6 +93,10 @@ val body_of : html -> html
   (** [body_of html] returns the body of the HTML document or the
       entire document if no body is found. *)
 
+val title_of : html -> string
+  (** [title_of html] returns the title contained in [html] (if no
+      title is present, it will return [""]). *)
+
 module Path :
 sig
   type t
