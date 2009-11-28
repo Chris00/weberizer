@@ -5,6 +5,7 @@ WEB=w3.umh.ac.be:~/html/umons/template
 SOURCES = UMONS.ml template.ml translate.ml
 
 OCAMLC_FLAGS = -g -dtypes
+OCAMLOPT_FLAGS = -dtypes -inline 3
 OCAMLPACKS = netstring,unix,str
 GENERATED_PATT = UMONS.%
 

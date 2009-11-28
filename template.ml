@@ -613,16 +613,16 @@ let write_html ?(doctype=true) html fname =
   Nethtml.write oc html ~dtd:Nethtml.html40_dtd;
   oc#close_out()
 
-
 (* [body_of doc] returns the content of the <body> (if any) of [doc]. *)
-let rec get_body_of_element = function
-  | Nethtml.Data _ -> []
-  | Nethtml.Element("body", args, content) -> content
-  | Nethtml.Element(_, _, content) -> get_body_of content
-and get_body_of content = List.concat (List.map get_body_of_element content)
+let rec add_body_of_element acc el = match el with
+  | Nethtml.Data _ -> acc
+  | Nethtml.Element("body", _, content) -> List.rev_append content acc
+  | Nethtml.Element(_, _, content) -> get_body_of acc content
+and get_body_of acc content =
+  List.rev(List.fold_left add_body_of_element [] content)
 
 let body_of html =
-  let body = get_body_of html in
+  let body = get_body_of [] html in
   if body = [] then html else body
 
 let rec concat_data c =
@@ -901,7 +901,7 @@ let email ?(args=[]) ?content e =
     (match content with
      | None -> "\" + local + '@' + h + \""
      | Some c ->
-        let buf = Buffer.create 100 in
+        let buf = Buffer.create 200 in
         let ch = new Netchannels.output_buffer buf in
         Nethtml.write ch c;
         ch#close_out();
