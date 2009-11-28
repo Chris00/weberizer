@@ -616,10 +616,9 @@ let write_html ?(doctype=true) html fname =
 (* [body_of doc] returns the content of the <body> (if any) of [doc]. *)
 let rec add_body_of_element acc el = match el with
   | Nethtml.Data _ -> acc
-  | Nethtml.Element("body", _, content) -> List.rev_append content acc
+  | Nethtml.Element("body", _, content) -> acc @ content
   | Nethtml.Element(_, _, content) -> get_body_of acc content
-and get_body_of acc content =
-  List.rev(List.fold_left add_body_of_element [] content)
+and get_body_of acc content = List.fold_left add_body_of_element [] content
 
 let body_of html =
   let body = get_body_of [] html in
