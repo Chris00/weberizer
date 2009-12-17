@@ -711,12 +711,14 @@ struct
     try get_title "" (read_html fname)
     with Sys_error _ -> ""
 
-  let lang_re = Str.regexp "\\([a-zA-Z_ ]+\\)\\(\\.\\([a-z]+\\)\\)?\\.html"
-  let base_and_lang_of_filename f =
+  let lang_re =
+    Str.regexp "\\([a-zA-Z_ ]+\\)\\(\\.\\([a-z]+\\)\\)?\\(\\.[a-zA-Z_ ]+\\)"
+  let base_lang_ext_of_filename f =
     if Str.string_match lang_re f 0 then
       (Str.matched_group 1 f,
-       try String.lowercase(Str.matched_group 3 f) with _ -> "")
-    else (try Filename.chop_extension f with _ -> f), ""
+       (try String.lowercase(Str.matched_group 3 f) with _ -> ""),
+       Str.matched_group 4 f)
+    else f, "", ""
 
   let language p =
     let f = filename p in
@@ -739,7 +741,7 @@ struct
         else
           let title = title_of_file p.full_path in
           if title = "" then
-            let base, _ = base_and_lang_of_filename p.name in
+            let base, _, _ = base_lang_ext_of_filename p.name in
             String.capitalize base
           else title in
       p.desc <- (lang, desc) :: p.desc;
@@ -747,7 +749,7 @@ struct
 
   let description p =
     if p.is_dir then invalid_arg "Template.Path.navigation: no filename";
-    let _, lang = base_and_lang_of_filename (filename p) in
+    let _, lang, _ = base_lang_ext_of_filename (filename p) in
     description_lang p lang
 
   (* [from_last_dir] is a relative path from the final directory
@@ -765,7 +767,7 @@ struct
     | None -> assert false (* a file must have a parent dir, possibly
                              the base one *)
     | Some d ->
-        let fbase, lang = base_and_lang_of_filename (filename p) in
+        let fbase, lang, _ = base_lang_ext_of_filename (filename p) in
         let file_nav =
           if fbase = "index" then []
           else [(description_lang p lang, "")] (* "" is the relative link
@@ -785,7 +787,7 @@ struct
 
   let translations ~langs p =
     let default_lang = match langs with d :: _ -> d | [] -> "" in
-    let fbase, lang = base_and_lang_of_filename (filename p) in
+    let fbase, lang, _ = base_lang_ext_of_filename (filename p) in
     let lang = if lang = "" then default_lang else lang in
     let path_base = concat (from_base p) fbase ^ "." in
     List.fold_right begin fun l trans ->
@@ -867,13 +869,14 @@ let iter_html ?(langs=["fr"]) ?(exts=[".html"]) ?(filter=(fun _ -> true)) base f
       let filter_dir p = not(List.mem (Path.from_base p) langs)
       and filter_file p = has_allowed_ext (Path.filename p) exts && filter p in
       Path.iter_files ~filter_file ~filter_dir (Path.make base) begin fun p ->
-        let fbase, lang = Path.base_and_lang_of_filename (Path.filename p) in
+        let fbase, lang, ext =
+          Path.base_lang_ext_of_filename (Path.filename p) in
         let lang = if lang = "" then default_lang else lang in
         if List.mem lang langs then begin
           let html = f lang p in
           let dir = Path.concat lang (Path.from_base p) in
           mkdir_if_absent dir;
-          write_html html (Filename.concat dir (fbase ^ ".html"))
+          write_html html (Filename.concat dir (fbase ^ ext))
         end
       end
 
