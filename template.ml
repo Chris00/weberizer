@@ -851,7 +851,13 @@ let check_lang l =
   if not(Str.string_match only_lower l 0) then
     invalid_arg(sprintf "Template.iter_html: language %S not valid" l)
 
-let iter_html ?(langs=["fr"]) ?(filter=(fun _ -> true)) base f =
+(* [has_allowed_ext fname exts] checks that [fname] ends with one of the
+   extension in [exts]. *)
+let rec has_allowed_ext fname exts = match exts with
+  | [] -> false
+  | ext :: tl -> Filename.check_suffix fname ext || has_allowed_ext fname tl
+
+let iter_html ?(langs=["fr"]) ?(exts=[".html"]) ?(filter=(fun _ -> true)) base f =
   if not(Sys.is_directory base) then
     invalid_arg "Template.iter_html: the base must be a directory";
   match langs with
@@ -859,8 +865,7 @@ let iter_html ?(langs=["fr"]) ?(filter=(fun _ -> true)) base f =
   | default_lang :: _ ->
       List.iter check_lang langs;
       let filter_dir p = not(List.mem (Path.from_base p) langs)
-      and filter_file p =
-        Filename.check_suffix (Path.filename p) ".html" && filter p in
+      and filter_file p = has_allowed_ext (Path.filename p) exts && filter p in
       Path.iter_files ~filter_file ~filter_dir (Path.make base) begin fun p ->
         let fbase, lang = Path.base_and_lang_of_filename (Path.filename p) in
         let lang = if lang = "" then default_lang else lang in

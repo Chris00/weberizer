@@ -153,7 +153,8 @@ sig
         the default one (files with no explicit language). *)
 end
 
-val iter_html : ?langs:string list -> ?filter:(Path.t -> bool) ->
+val iter_html : ?langs:string list ->
+  ?exts: string list -> ?filter:(Path.t -> bool) ->
   string -> (string -> Path.t -> html) -> unit
   (** [iter_html base f] iterates [f lang file] on all HTML files
       under [base] (the argument of [f] is guaranteed to be a path to
@@ -166,6 +167,9 @@ val iter_html : ?langs:string list -> ?filter:(Path.t -> bool) ->
       @param lang the accepted languages.  The first one being the
       default one (for files that do not specify a language).
       @raise Invalid_argument if languages are not lowercase only.
+
+      @param the allowed file extensions.  Defaut: [[".html"]].  May
+      be useful, ofr example, if you want to deal PHP pages.
 
       @param filter examine the file of dir iff the condition [filter
       rel_dir f] holds on the relative path [rel_dir] from [root] and
