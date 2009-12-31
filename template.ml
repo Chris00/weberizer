@@ -791,15 +791,15 @@ struct
 
   let translations ~langs p =
     let default_lang = match langs with d :: _ -> d | [] -> "" in
-    let fbase, lang, _ = base_lang_ext_of_filename (filename p) in
+    let fbase, lang, ext_p = base_lang_ext_of_filename (filename p) in
     let lang = if lang = "" then default_lang else lang in
-    let path_base = concat (from_base p) fbase ^ "." in
+    let path_base = concat (from_base p) fbase in
     List.fold_right begin fun l trans ->
-      let ext = if l = default_lang then "html" else l ^ ".html" in
+      let ext = if l = default_lang then ext_p else "." ^ l ^ ext_p in
       if Sys.file_exists(path_base ^ ext) then
         let url =
           if l = lang then ""
-          else sprintf "%s../%s/%shtml" (to_base p) l path_base in
+          else sprintf "%s../%s/%s%s" (to_base p) l path_base ext_p in
         (l, url) :: trans
       else trans
     end langs []
