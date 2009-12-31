@@ -747,11 +747,6 @@ struct
       p.desc <- (lang, desc) :: p.desc;
       desc
 
-  let description p =
-    if p.is_dir then invalid_arg "Template.Path.navigation: no filename";
-    let _, lang, _ = base_lang_ext_of_filename (filename p) in
-    description_lang p lang
-
   (* [from_last_dir] is a relative path from the final directory
      pointed by [p] to each path component. *)
   let rec navigation_dir from_last_dir acc p lang = match p.parent with
@@ -773,6 +768,15 @@ struct
           else [(description_lang p lang, "")] (* "" is the relative link
                                                   to the current file *) in
         navigation_dir "./" file_nav d lang
+
+  let rec last_navigation = function
+    | [] -> assert false
+    | [(d,_)] -> d
+    | _ :: tl -> last_navigation tl
+
+  let description p =
+    if p.is_dir then invalid_arg "Template.Path.description: no filename";
+    last_navigation (navigation p)
 
   (*
    * Links for translations

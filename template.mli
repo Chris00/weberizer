@@ -114,7 +114,7 @@ sig
 
   val filename : t -> string
     (** The filename the path points to.  The path designates a
-        directory if and only if[filename] returns [""]. *)
+        directory if and only if [filename] returns [""]. *)
 
   val to_base : t -> string
     (** The path from the directory of the filename to the base
