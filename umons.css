@@ -161,6 +161,10 @@ div.umons-menu {
   display: block;
 }
 
+.promotion {
+  clear: both;
+  float: left;
+}
 
 .banner a {
   border: 0;
