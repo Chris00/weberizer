@@ -63,7 +63,7 @@ div.horizontal-line {
 }
 
 /* Logo UMons dans le coin supérieur gauche */
-#menucol img {
+#menucol img.logo {
   width: 85%;
   padding-top: 10px;
   border: 0;
