@@ -974,8 +974,9 @@ and protect_emails_element = function
 let is_href (a, _) = a = "href"
 
 let apply_relative_href base ((href, url) as arg) =
-  let url = parse_url url ~base_syntax:ip_url_syntax in
-  try (href, string_of_url(Neturl.apply_relative_url base url))
+  try
+    let url = parse_url url ~base_syntax:ip_url_syntax in
+    (href, string_of_url(Neturl.apply_relative_url base url))
   with Malformed_URL -> arg
 
 let rec apply_relative_url base html =
