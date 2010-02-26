@@ -78,7 +78,9 @@ val read : ?bindings:Binding.t -> string -> html
 
       @param bindings if provided, perform the substitutions it
       mandates.  Otherwise, the "raw" HTML is returned (this is the
-      default). *)
+      default).
+
+      @raise Sys_error if the file cannot be read. *)
 
 
 (** {1 Utilities} *)
