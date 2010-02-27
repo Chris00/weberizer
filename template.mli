@@ -1,5 +1,25 @@
 
-(** Simple templating library. *)
+(** Simple templating library.  It reads HTML files "with variables"
+    and can either output an OCaml module (reusable template with some
+    static checks) or perform substitutions and return the HTML.
+
+    To parametrize the HTML, you can add the following arguments to
+    any HTML tag:
+    {%
+    ml:content="<ident>"
+    ml:content="<ident> <arg1> ... <argN>"
+    ml:strip="true"   ml:strip="if empty"
+    ml:replace="<ident>"
+    %}
+    A special value of <ident> is "include".  It serves to include the
+    files passed as arguments and is not be treated as a variable.
+
+    Inside HTML arguments themselves, one can use
+    {%
+    ${<ident>}
+    ${function args}
+    %}
+*)
 
 type html = Nethtml.document list
 
@@ -46,7 +66,7 @@ module Binding :
 sig
   type t
     (** Mutable value holding a correspondence of a variable name to
-        its value. *)
+        its value (both being strings). *)
 
   exception Not_found of string
     (** [Not_found var] is raised if the variable [var] is not found

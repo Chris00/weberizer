@@ -1,11 +1,5 @@
 (* Parse an HTML file with template annotations and outputs an OCaml
    module that allows to fill the "holes" and output the final file.
-
-   ml:content="<ident>"
-   ml:strip="true"   ml:strip="if empty"
-   ml:replace="<ident>"
-   ${<ident>}
-   ${function args}
 *)
 
 open Format
@@ -30,7 +24,7 @@ let valid_ocaml_id s =
 
 let is_space c = c = ' ' || c = '\t' || c = '\n' || c = '\r'
 
-(* Return the *)
+(* Return the first index [j >= i] such that [s.[j]] is not a space.  *)
 let rec skip_spaces s i len =
   if i >= len then len
   else if is_space s.[i] then skip_spaces s (i + 1) len
@@ -120,6 +114,8 @@ struct
     List.iter (fun a -> fprintf fm "%S;" a) args;
     fprintf fm "])"
 
+  (* See [compile_html] where [eval] and [t] are defined in the
+     generated module. *)
   let write_code_html fm h v args = match ty h v with
     | HTML -> fprintf fm "eval t t.%s" v
     | String -> fprintf fm "[Nethtml.Data(eval t t.%s)]" v
@@ -267,19 +263,37 @@ let rec split_args parse_string ml args all = match all with
       )
       else split_args parse_string ml ((arg, parse_string v) :: args) tl
 
+let read_html fname =
+  let fh = open_in fname in
+  let tpl = (Nethtml.parse_document (Lexing.from_channel fh)
+               ~dtd:Nethtml.relaxed_html40_dtd) in
+  close_in fh;
+  tpl
+
 let rec parse_element h html = match html with
-  | Nethtml.Data(s) -> Data(parse_string h s)
+  | Nethtml.Data(s) -> [Data(parse_string h s)]
   | Nethtml.Element(el, args, content) ->
       let ml = { content = "";  args = [];  strip = `No } in
       let args = split_args (parse_string h) ml [] args in
-      if ml.content <> "" then (
-        Var.add h ml.content (if ml.args = [] then Var.HTML else Var.Fun_html);
-        Content(el, args, ml.strip, ml.content, ml.args)
+      if ml.content = "" then
+        [Element(el, args, parse_html h content)]
+      else if ml.content = "include" then (
+        let content = List.concat(List.map (read_and_parse h) ml.args) in
+        eprintf "include\n%!";
+        match ml.strip with
+        | `No -> [Element(el, args, content)]
+        | `Yes -> content
+        | `If_empty -> (if content = [] then []
+                       else [Element(el, args, content)])
       )
-      else
-        Element(el, args, parse_html h content)
+      else (
+        Var.add h ml.content (if ml.args = [] then Var.HTML else Var.Fun_html);
+        [Content(el, args, ml.strip, ml.content, ml.args)]
+      )
 
-and parse_html h html = List.map (parse_element h) html
+and parse_html h html = List.concat(List.map (parse_element h) html)
+
+and read_and_parse h fname = parse_html h (read_html fname)
 
 
 (* Output to a static module
@@ -339,18 +353,18 @@ and write_rendering_node fm h tpl = match tpl with
       (* We are writing a list.  If this must be removed, concatenate
          with left and right lists.  FIXME: this is not ideal and
          maybe one must move away from Nethtml representation? *)
-      match strip with
-      | `No ->
+      (match strip with
+       | `No ->
           fprintf fm "@[<2>Nethtml.Element(%S,@ " el;
           write_args fm args;
           fprintf fm ",@ ";
           Var.write_code_html fm h var fun_args;
           fprintf fm ");@]@ "
-      | `Yes ->
+       | `Yes ->
           fprintf fm "]@ @@ ";
           Var.write_code_html fm h var fun_args;
           fprintf fm "@ @@ ["
-      | `If_empty ->
+       | `If_empty ->
           fprintf fm "]@ @@ @[<1>(";
           let bound_var = Var.write_binding fm h var fun_args in
           fprintf fm "if %s = " bound_var;
@@ -358,23 +372,16 @@ and write_rendering_node fm h tpl = match tpl with
           fprintf fm " then []@ else @[<2>[Nethtml.Element(%S,@ " el;
           write_args fm args;
           fprintf fm ",@ %s)]@])@]@ @@ [" bound_var
+      )
 ;;
-
-let read_html fname =
-  let fh = open_in fname in
-  let tpl = (Nethtml.parse_document (Lexing.from_channel fh)
-               ~dtd:Nethtml.relaxed_html40_dtd) in
-  close_in fh;
-  tpl
 
 let compile_html ?trailer_ml ?trailer_mli ?(hide=[]) ?module_name fname =
   let module_name = match module_name with
     | None -> (try Filename.chop_extension fname with _ -> fname)
     | Some n -> n (* FIXME: check valid module name *) in
-  let tpl = read_html fname in
   (* Parse *)
   let h = Var.make() in
-  let tpl = parse_html h tpl in
+  let tpl = read_and_parse h fname in
   (* Output implementation *)
   let fh = open_out (module_name ^ ".ml") in
   let fm = formatter_of_out_channel fh in
@@ -457,7 +464,7 @@ let compile_html ?trailer_ml ?trailer_mli ?(hide=[]) ?module_name fname =
 let content_of_file file =
   let fh = open_in file in
   let buf = Buffer.create 500 in
-  (* Add a dirrective to refer to the original file for errors *)
+  (* Add a directive to refer to the original file for errors *)
   Buffer.add_string buf ("# 1 \"" ^ String.escaped file ^ "\"\n");
   try
     while true do
@@ -581,14 +588,19 @@ let rec subst_element bindings html = match html with
   | Nethtml.Element(el, args, content0) ->
       let ml = { content = "";  args = [];  strip = `No } in
       let args = split_args (subst_string bindings) ml [] args in
-      if ml.content <> "" then
-        let content = Binding.subst_to_html bindings ml.content ml.args in
+      if ml.content = "" then
+        [Nethtml.Element(el, args, subst bindings content0)]
+      else
+        let content =
+          if ml.content = "include" then
+            List.concat(List.map (fun f -> subst bindings (read_html f)) ml.args)
+          else
+            Binding.subst_to_html bindings ml.content ml.args in
         match ml.strip with
         | `No -> [Nethtml.Element(el, args, content)]
         | `Yes -> content
         | `If_empty -> (if content = [] then []
                        else [Nethtml.Element(el, args, content)])
-      else [Nethtml.Element(el, args, subst bindings content0)]
 
 and subst bindings html =
   List.concat(List.map (subst_element bindings) html)
