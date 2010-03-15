@@ -57,10 +57,10 @@ let rec horizontal_toolbar = function
 let toolbar_fr contact map =
   let admin = sprintf "http://portail.umons.ac.be/FR/universite/admin" in
   ["Annuaire", "http://telephone.umh.ac.be/reppersumons/REPPERSlist.asp";
-   "Bibliothèques", "http://w3.umh.ac.be/Bibli/sms.htm";
+   "BibliothÃ¨ques", "http://w3.umh.ac.be/Bibli/sms.htm";
    "Cours en ligne",
    "https://applications.umons.ac.be/moodleumh/course/category.php?id=2";
-   "Plan d'accès", map;
+   "Plan d'accÃ¨s", map;
    "Contact", contact;
    "Emploi", (admin ^ "/drh/emploi/Pages/Emploi.aspx");
    "Agenda", (admin ^ "/scrp/Pages/Agenda.aspx") ]
