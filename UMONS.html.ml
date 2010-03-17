@@ -106,10 +106,11 @@ let bbclone tpl p =
     let nav = Template.Path.navigation p in
     let name, _ = list_last_element nav in
     (* HACK: "<?" is not supported by Nethtml, we use the fact that no
-       escaping is done when printing Data values. *)
+       escaping is done when printing Data values.  Do not escape
+       [name] because it is encoded in UTF-8. *)
     [Data(sprintf "<?php
 	@ob_end_flush();
-	define(\"_BBC_PAGE_NAME\", %S);
+	define(\"_BBC_PAGE_NAME\", \"%s\");
 	define(\"_BBCLONE_DIR\", %S . \"../bbclone/\");
 	define(\"COUNTER\", _BBCLONE_DIR.\"mark_page.php\");
 	if (is_readable(COUNTER)) include_once(COUNTER);
