@@ -928,7 +928,7 @@ let email ?(args=[]) ?content e =
         let ch = new Netchannels.output_buffer buf in
         Nethtml.write ch c;
         ch#close_out();
-        String.escaped (Buffer.contents buf)) in
+        Buffer.contents buf) in
   let noscript = match content with
     | None -> [Nethtml.Data(local_part);
               Nethtml.Element("abbr", ["title", "(at) &rarr; @"],
