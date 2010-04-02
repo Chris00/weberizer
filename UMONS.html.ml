@@ -111,7 +111,7 @@ let bbclone tpl p =
     [Data(sprintf "<?php
 	@ob_end_flush();
 	define(\"_BBC_PAGE_NAME\", \"%s\");
-	define(\"_BBCLONE_DIR\", %S . \"../bbclone/\");
+	define(\"_BBCLONE_DIR\", %S . \"../bb/\");
 	define(\"COUNTER\", _BBCLONE_DIR.\"mark_page.php\");
 	if (is_readable(COUNTER)) include_once(COUNTER);
 	?>" name (Get.url_base t))]
