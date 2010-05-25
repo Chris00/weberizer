@@ -689,8 +689,6 @@ struct
                              be given to the library user. *)
   let from_base p = p.from_base
 
-  let is_base p = (p.parent = None)
-
   let parent p = match p.parent with
     | None -> failwith "Template.Path.parent: Base directory, no parent"
     | Some d -> d
@@ -702,6 +700,10 @@ struct
   let from_base_split p = from_base_split_loop [] p
 
   let to_base p = p.to_base
+
+  let in_base p = match p.parent with
+    | None -> true
+    | Some d -> d.parent = None
 
   let to_base_split p = match p.parent with
       (* Beware that the split version of "../" is [".."; ""] (but the
