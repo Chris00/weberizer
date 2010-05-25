@@ -88,12 +88,14 @@ let toolbar tpl ?contact ?map ~lang:l p =
     | None -> base ^ "contact/acces.html#maps" | Some m -> m in
   match l with
   | "en" ->
-      let tpl = toolbar tpl (horizontal_toolbar (toolbar_en contact map)) in
-      search_name tpl "Search"
+    let tpl = country tpl "Belgium" in
+    let tpl = toolbar tpl (horizontal_toolbar (toolbar_en contact map)) in
+    search_name tpl "Search"
   | "fr" ->
-      let tpl = toolbar tpl (horizontal_toolbar (toolbar_fr contact map)) in
-      search_name tpl "Rechercher"
-  | _ -> failwith(Printf.sprintf "UMONS.toolbar: language %S not recognized" l)
+    let tpl = country tpl "Belgique" in
+    let tpl = toolbar tpl (horizontal_toolbar (toolbar_fr contact map)) in
+    search_name tpl "Rechercher"
+  | _ -> failwith(Printf.sprintf "UMONS.toolbar: language %S not supported" l)
 
 
 let rec list_last_element = function
