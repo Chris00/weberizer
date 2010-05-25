@@ -142,6 +142,9 @@ sig
     (** The path from the directory of the filename to the base
         directory.  One can see it as the "inverse" of [from_base]. *)
 
+  val is_base : t -> bool
+  (** [is_base p] returns [true] if [p] is the base directory. *)
+
   val to_base_split : t -> string list
     (** The path from the directory of the filename to the base
         directory.  One can see it as the "inverse" of [from_base_split]. *)

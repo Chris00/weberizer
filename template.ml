@@ -689,6 +689,8 @@ struct
                              be given to the library user. *)
   let from_base p = p.from_base
 
+  let is_base p = (p.parent = None)
+
   let parent p = match p.parent with
     | None -> failwith "Template.Path.parent: Base directory, no parent"
     | Some d -> d
