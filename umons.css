@@ -233,6 +233,7 @@ div.umons-menu {
   text-align: left;
   font-family: Verdana, Arial, Helvetica, sans-serif;
   font-size: .7em;
+  font-style: normal;
   color: #808080;
 }
 .horizontal-toolbar a:link, .horizontal-toolbar a:visited {
