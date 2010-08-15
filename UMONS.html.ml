@@ -59,7 +59,7 @@ let toolbar_fr contact map =
   ["Annuaire", "http://telephone.umh.ac.be/reppersumons/REPPERSlist.asp";
    "Bibliothèques", "http://w3.umh.ac.be/Bibli/sms.htm";
    "Cours en ligne",
-   "https://applications.umons.ac.be/moodleumh/course/category.php?id=2";
+   "https://applications.umons.ac.be/moodle/course/category.php?id=2";
    "Plan d'accès", map;
    "Contact", contact;
    "Emploi", (admin ^ "/drh/emploi/Pages/Emploi.aspx");
@@ -71,7 +71,7 @@ let toolbar_en contact map =
   ["Directory", "http://telephone.umh.ac.be/reppersumons/REPPERSlist.asp";
    "Libraries", "http://w3.umh.ac.be/Bibli/sms.htm";
    "E-learning",
-   "https://applications.umons.ac.be/moodleumh/course/category.php?id=2";
+   "https://applications.umons.ac.be/moodle/course/category.php?id=2";
    "Directions", map;
    "Contact", contact;
    "Jobs", (admin ^ "/drh/emploi/Pages/Emploi.aspx");
