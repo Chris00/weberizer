@@ -63,7 +63,8 @@ let toolbar_fr contact map =
    "Plan d'accès", map;
    "Contact", contact;
    "Emploi", (admin ^ "/drh/emploi/Pages/Emploi.aspx");
-   "Agenda", (admin ^ "/scrp/Pages/Agenda.aspx") ]
+   "Agenda", (admin ^ "/cerp/Pages/Agenda.aspx");
+   "Actualités", "http://portail.umons.ac.be/FR/actualites/" ]
 
 let toolbar_en contact map =
   (* FIXME: must replace FR by EN once the main site will be translated. *)
@@ -75,7 +76,7 @@ let toolbar_en contact map =
    "Directions", map;
    "Contact", contact;
    "Jobs", (admin ^ "/drh/emploi/Pages/Emploi.aspx");
-   "Agenda", (admin ^ "/scrp/Pages/Agenda.aspx") ]
+   "Diary", (admin ^ "/cerp/Pages/Agenda.aspx") ]
 
 let toolbar tpl ?contact ?map ~lang:l p =
   let l = String.lowercase l in
