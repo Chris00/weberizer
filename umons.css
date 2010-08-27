@@ -512,3 +512,15 @@ tr.odd td {
   padding-right: 0.3ex;
 }
 
+/* Liens vers les fiches ECTS, typiquement dans les titres contenant
+le nom du cours.  */
+.ects {
+  font-size: medium;
+  font-weight: normal;
+  color: #6f6f6f;
+}
+.ects a {
+  color: #6f6f6f;
+  /* In headers, the bottom border is suppressed.  Make sure it is present */
+  border-bottom: dotted 1px #6f6f6f;
+}
