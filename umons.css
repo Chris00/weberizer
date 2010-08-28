@@ -515,12 +515,23 @@ tr.odd td {
 /* Liens vers les fiches ECTS, typiquement dans les titres contenant
 le nom du cours.  */
 .ects {
-  font-size: medium;
-  font-weight: normal;
-  color: #6f6f6f;
+  font-size: x-small;
+  font-weight: bold;
+  color: #a9a9a9;
+  white-space: nowrap;
 }
-.ects a {
-  color: #6f6f6f;
-  /* In headers, the bottom border is suppressed.  Make sure it is present */
+h1 .ects {
+  float: right;
+  padding-top: 1ex; /* help center with title */  
+}
+.ects a, .ects a:visited {
+  color: #a9a9a9;
+  /* In headers, the bottom border is suppressed.  Make sure it is present. */
   border-bottom: dotted 1px #6f6f6f;
+}
+.ects a:hover {
+  /* Use a same style similar to the horizontal toolbar. */
+  color: rgb(204,0,51);
+  background: #FFF;
+  border-bottom: dotted 1px rgb(204,0,51);
 }
