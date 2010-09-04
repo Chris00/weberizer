@@ -55,11 +55,13 @@
 		 onblur="if(this.value=='') this.value='${search_name}...';"
 		 onfocus="if(this.value=='${search_name}...') this.value='';"
 		 />
-	  <input type="hidden" name="as_sitesearch"
-		 value="${web_host}" />
 	  <button type="submit"
 		  ><img src="${url_base}images/gosearch.gif"
 			alt="Search" ></button>
+	  <select name="as_sitesearch">
+	    <option>${web_host}</option>
+	    <option>portail.umons.ac.be</option>
+	  </select>
 	</div>
       </form>
       <span class="banner">

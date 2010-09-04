@@ -283,10 +283,14 @@ form.search-box {
   margin: 0;
 }
 
-.search-box input, .search-box button {
+.search-box input, .search-box button, .search-box select {
   font-size: 75%;
   font-family: Verdana, Arial, Helvetica, sans-serif;
   /* height: 4ex; */
+}
+
+.search-box select {
+  padding: 1px;
 }
 
 @media print {
