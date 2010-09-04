@@ -293,10 +293,6 @@ form.search-box {
   /* height: 4ex; */
 }
 
-.search-box select {
-  padding: 1px;
-}
-
 @media print {
   form.search-box { display: none }
 }
