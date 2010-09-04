@@ -163,6 +163,10 @@ div.umons-menu {
   display: block;
 }
 
+.umons-menu img {
+  border: 0;
+}
+
 .promotion {
   clear: both;
   float: left;
