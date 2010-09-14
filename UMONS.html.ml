@@ -57,7 +57,7 @@ let rec horizontal_toolbar = function
 let toolbar_fr contact map =
   let admin = sprintf "http://portail.umons.ac.be/FR/universite/admin" in
   ["Annuaire", "http://annuaire.umons.ac.be/";
-   "Bibliothèques", "http://w3.umh.ac.be/Bibli/sms.htm";
+   "Bibliothèques", admin ^ "/biblio/Pages/Catalogue.aspx";
    "Cours en ligne",
    "https://applications.umons.ac.be/moodle/course/category.php?id=2";
    "Plan d'accès", map;
@@ -70,7 +70,7 @@ let toolbar_en contact map =
   (* FIXME: must replace FR by EN once the main site will be translated. *)
   let admin = sprintf "http://portail.umons.ac.be/FR/universite/admin" in
   ["Directory", "http://annuaire.umons.ac.be/";
-   "Libraries", "http://w3.umh.ac.be/Bibli/sms.htm";
+   "Libraries", admin ^ "/biblio/Pages/Catalogue.aspx";
    "E-learning",
    "https://applications.umons.ac.be/moodle/course/category.php?id=2";
    "Directions", map;
