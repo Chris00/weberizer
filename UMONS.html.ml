@@ -76,7 +76,7 @@ let toolbar_en contact map =
    "Directions", map;
    "Contact", contact;
    "Jobs", (admin ^ "/drh/emploi/Pages/Emploi.aspx");
-   "Diary", "http://portail.umons.ac.be/EN/University/admin/scrp/Pages/Agenda.aspx" ]
+   "Calendar", "http://portail.umons.ac.be/EN/University/admin/scrp/Pages/Agenda.aspx" ]
 
 let toolbar tpl ?contact ?map ~lang:l p =
   let l = String.lowercase l in
