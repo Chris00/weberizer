@@ -307,7 +307,7 @@ let write_string_or_var fh s = match s with
       List.iter (fun v -> fprintf fh "%S " v) args
 
 let write_subst_string fh s = match s with
-  | [] -> ()
+  | [] -> fprintf fh "\"\""
   | [s] -> write_string_or_var fh s
   | [s1; s2] ->
       write_string_or_var fh s1; fprintf fh "@ ^ ";
