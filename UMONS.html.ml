@@ -87,6 +87,7 @@ let toolbar tpl ?contact ?map ~lang:l p =
     | None -> base ^ "contact/" | Some c -> c in
   let map = match map with
     | None -> base ^ "contact/acces.html#maps" | Some m -> m in
+  let tpl = shortcut_icon tpl (base ^ "images/UMONS16x16.ico") in
   match l with
   | "en" ->
     let tpl = country tpl [Data "Belgium"] in

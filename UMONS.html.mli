@@ -10,7 +10,8 @@ val toolbar : t -> ?contact:string -> ?map:string ->
     of the toolbar ("Annuaire",...) appropriately filled according
     to the language of the file pointed by the [path].
     [contact_link] is the link to the "contact" page.  The base URL
-    is also set from [path]. *)
+    is also set from [path].
+    It also sets a sensible default for the shortcut icon. *)
 
 (* @hide navigation_bar *)
 val navigation_of_path : t -> ?prefix:(string * string) list ->
