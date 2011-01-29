@@ -670,6 +670,10 @@ struct
     (* cache; associative list: lang -> descriptive name *)
   }
 
+  let base = { name = ".";  is_dir = true;  full_path = ".";
+               from_base = ".";  to_base = ".";  parent = None;
+               desc = [] }
+
   (** Apply [f] to all components of the path [p] exept the base one. *)
   let rec fold_left f a p = match p.parent with
     | None -> a (* base dir *)

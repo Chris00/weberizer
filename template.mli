@@ -124,6 +124,8 @@ sig
   type t
     (** Path relative to a base directory. *)
 
+  val base : t
+
   val from_base : t -> string
     (** The (normalized) path to the filename (the filename being
         excluded) relative to the base directory.  Returns [""] if we
