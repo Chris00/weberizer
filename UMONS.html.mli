@@ -4,7 +4,7 @@
 val banner : t -> ?base:bool -> string -> t
 
 (* @hide toolbar *)
-val toolbar : t -> ?contact:string -> ?map:string ->
+val toolbar : t -> ?contact:string -> ?map:string -> ?base:string ->
   lang:string -> Template.Path.t -> t
 (** [toobar tpl path contact_link] returns a template with the links
     of the toolbar ("Annuaire",...) appropriately filled according

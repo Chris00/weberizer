@@ -78,10 +78,12 @@ let toolbar_en contact map =
    "Jobs", (admin ^ "/drh/emploi/Pages/Emploi.aspx");
    "Calendar", "http://portail.umons.ac.be/EN/University/admin/scrp/Pages/Agenda.aspx" ]
 
-let toolbar tpl ?contact ?map ~lang:l p =
+let toolbar tpl ?contact ?map ?base ~lang:l p =
   let l = String.lowercase l in
   let tpl = lang tpl l in
-  let base = Template.Path.to_base p in
+  let base = match base with
+    | None -> Template.Path.to_base p
+    | Some base -> base in
   let tpl = url_base tpl base in
   let contact = match contact with
     | None -> base ^ "contact/" | Some c -> c in
