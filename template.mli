@@ -160,6 +160,8 @@ sig
     (** [description p] returns the descriptive name for the file
         pointed by [p]. *)
 
+  val concat_file : t -> string -> t
+
   val navigation : t -> (string * string) list
     (** [navigation p] returns the navigation information for the path
         [p].  It consists of a list of pairs [(name, path)] where

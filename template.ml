@@ -670,10 +670,6 @@ struct
     (* cache; associative list: lang -> descriptive name *)
   }
 
-  let base = { name = ".";  is_dir = true;  full_path = ".";
-               from_base = ".";  to_base = "./";  parent = None;
-               desc = [] }
-
   (** Apply [f] to all components of the path [p] exept the base one. *)
   let rec fold_left f a p = match p.parent with
     | None -> a (* base dir *)
@@ -688,6 +684,8 @@ struct
       full_path = base;  from_base = "";
       to_base = "./"; (* must end with "/" *)
       parent = None;  desc = [] }
+
+  let base = make "."
 
   let filename p = p.name (* may be the dir name, but only files will
                              be given to the library user. *)
@@ -839,7 +837,7 @@ struct
     }
 
   let concat_file p fname =
-    assert(p.is_dir);
+    if not p.is_dir then failwith "Template.Path.concat_file";
     { name = fname;  is_dir = false;
       full_path = concat p.full_path fname;
       from_base = p.from_base; (* no file *)
