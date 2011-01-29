@@ -671,7 +671,7 @@ struct
   }
 
   let base = { name = ".";  is_dir = true;  full_path = ".";
-               from_base = ".";  to_base = ".";  parent = None;
+               from_base = ".";  to_base = "./";  parent = None;
                desc = [] }
 
   (** Apply [f] to all components of the path [p] exept the base one. *)
