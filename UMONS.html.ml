@@ -26,11 +26,14 @@ let rec transform_path sep p = match p with
       let el = Element("a", ["href", rev], [Data a]) in
       sep :: el :: transform_path sep tl
 
-let navigation_of_path tpl ?(prefix=[]) p =
+let navigation tpl ?(prefix=[]) path =
   Set.navigation_bar tpl begin fun t ->
     let sep = separation_arrow (Get.url_base t) in
-    transform_path sep (prefix @ Template.Path.navigation p)
+    transform_path sep (prefix @ path)
   end
+
+let navigation_of_path tpl ?prefix p =
+  navigation tpl ?prefix (Template.Path.navigation p)
 
 
 let stylesheet tpl ?(rel_base=true) url =

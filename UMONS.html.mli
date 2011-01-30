@@ -16,6 +16,11 @@ val toolbar : t -> ?contact:string -> ?map:string -> ?base:string ->
     @param base replace the base path extracted from [path].  *)
 
 (* @hide navigation_bar *)
+val navigation : t -> ?prefix:(string * string) list ->
+  (string * string) list -> t
+(** [navigation t nav] set the navigation bar from the information in
+    [nav].  The couples of [nav] are of the form [(text, URL)]. *)
+
 val navigation_of_path : t -> ?prefix:(string * string) list ->
   Template.Path.t -> t
 (** [navigation_of_path t path] add a navigation bar based on the
