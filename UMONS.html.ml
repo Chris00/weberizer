@@ -82,7 +82,7 @@ let toolbar_fr contact map =
 let toolbar_en contact map =
   (* FIXME: must replace FR by EN once the main site will be translated. *)
   let admin = sprintf "http://portail.umons.ac.be/FR/universite/admin" in
-  ["Directory", "http://annuaire.umons.ac.be/";
+  ["Directory", "http://annuaire.umons.ac.be/reppersumons2/REPPERSlist.asp";
    "Libraries", admin ^ "/biblio/Pages/Catalogue.aspx";
    "E-learning",
    "https://applications.umons.ac.be/moodle/course/category.php?id=2";
