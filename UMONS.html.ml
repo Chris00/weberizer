@@ -3,6 +3,16 @@
 open Printf
 open Nethtml
 
+let empty =
+  let tpl = Set.description empty (fun _ ->
+    "Site du Département de Mathématique de l'Université de Mons \
+     [Site of the Mathematics Department of Mons University]") in
+  Set.keywords tpl (fun _ ->
+    "mathématique; mathematique, master, math-info, math-finance, \
+     cours de math, professeur, prof de math, agrégation, finance, \
+     UMONS, Université de Mons, Universite de Mons, Belgique, \
+     Mathematics, Mons, Bergen, University, Belgium, Math, Maths")
+
 let banner tpl ?(base=true) img =
   Set.url_banner tpl begin fun t ->
     if base then Get.url_base t ^ "/images/" ^ img
