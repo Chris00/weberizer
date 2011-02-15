@@ -10,6 +10,8 @@ type html = Nethtml.document list
 (* Helper functions
  ***********************************************************************)
 
+let html_encode = Netencoding.Html.encode ~in_enc:`Enc_utf8 ()
+
 let is_lowercase c = 'a' <= c && c <= 'z'
 let is_valid_char c =
   ('0' <= c && c <= '9') || is_lowercase c || ('A' <= c && c <= 'Z') || c = '_'
@@ -235,34 +237,35 @@ type ocaml_args = {
 let is_ocaml_arg s =
   String.length s > 3 && s.[0] = 'm' && s.[1] = 'l' && s.[2] = ':'
 
-(* [split_args_set_ml h ml [] all] go through the arguments [all], record the
-   "ml:*" arguments in [ml] and returns the other arguments.  These
-   arguments possibly contain variables which will be recorded in [h]. *)
+(* [split_args_set_ml h ml [] all] go through the arguments [all],
+   record the "ml:*" arguments in [ml] and returns the other
+   arguments.  These other arguments possibly contain variables.  This
+   is the work of [parse_string] to replace them. *)
 let rec split_args_set_ml parse_string ml args all = match all with
   | [] -> args
   | (arg, v) :: tl ->
-      if is_ocaml_arg arg then (
-        begin
-          let a = String.sub arg 3 (String.length arg - 3) in
-          if a = "content" then
-            match split_on_spaces v with
-            | v :: args when valid_ocaml_id v ->
-                ml.content <- v;  ml.args <- args
-            | _ -> failwith(sprintf "The variable name %S is not valid" v)
-          else if a = "strip" then
-            let v = strip_spaces v in
-            ml.strip <- (if v = "ifempty" || v = "if empty" then `If_empty
-                        else `Yes)
-          else if a = "replace" then
-            match split_on_spaces v with
-            | v :: args when valid_ocaml_id v ->
-                ml.content <- v;  ml.args <- args;  ml.strip <- `Yes
-            | _ -> failwith(sprintf "The variable name %S is not valid" v)
-        end;
-        split_args_set_ml parse_string ml args tl
-      )
-      else
-        split_args_set_ml parse_string ml ((arg, parse_string v) :: args) tl
+    if is_ocaml_arg arg then (
+      begin
+        let a = String.sub arg 3 (String.length arg - 3) in
+        if a = "content" then
+          match split_on_spaces v with
+          | v :: args when valid_ocaml_id v ->
+            ml.content <- v;  ml.args <- args
+          | _ -> failwith(sprintf "The variable name %S is not valid" v)
+        else if a = "strip" then
+          let v = strip_spaces v in
+          ml.strip <- (if v = "ifempty" || v = "if empty" then `If_empty
+            else `Yes)
+        else if a = "replace" then
+          match split_on_spaces v with
+          | v :: args when valid_ocaml_id v ->
+            ml.content <- v;  ml.args <- args;  ml.strip <- `Yes
+          | _ -> failwith(sprintf "The variable name %S is not valid" v)
+      end;
+      split_args_set_ml parse_string ml args tl
+    )
+    else
+      split_args_set_ml parse_string ml ((arg, parse_string v) :: args) tl
 
 let split_args parse_string args all =
   let ml = { content = "";  args = [];  strip = `No } in
@@ -279,21 +282,21 @@ let read_html fname =
 let rec parse_element h html = match html with
   | Nethtml.Data(s) -> [Data(parse_string h s)]
   | Nethtml.Element(el, args, content) ->
-      let args, ml = split_args (parse_string h) [] args in
-      if ml.content = "" then
-        [Element(el, args, parse_html h content)]
-      else if ml.content = "include" then (
-        let content = List.concat(List.map (read_and_parse h) ml.args) in
-        match ml.strip with
-        | `No -> [Element(el, args, content)]
-        | `Yes -> content
-        | `If_empty -> (if content = [] then []
-                       else [Element(el, args, content)])
-      )
-      else (
-        Var.add h ml.content (if ml.args = [] then Var.HTML else Var.Fun_html);
-        [Content(el, args, ml.strip, ml.content, ml.args)]
-      )
+    let args, ml = split_args (parse_string h) [] args in
+    if ml.content = "" then
+      [Element(el, args, parse_html h content)]
+    else if ml.content = "include" then (
+      let content = List.concat(List.map (read_and_parse h) ml.args) in
+      match ml.strip with
+      | `No -> [Element(el, args, content)]
+      | `Yes -> content
+      | `If_empty -> (if content = [] then []
+        else [Element(el, args, content)])
+    )
+    else (
+      Var.add h ml.content (if ml.args = [] then Var.HTML else Var.Fun_html);
+      [Content(el, args, ml.strip, ml.content, ml.args)]
+    )
 
 and parse_html h html = List.concat(List.map (parse_element h) html)
 
@@ -553,19 +556,19 @@ struct
 
   let subst_to_string b var args =
     match find b var with
-    | String s -> (match args with [] -> s | _ -> fail_not_a_fun var)
-    | Fun f -> f args
+    | String s -> (match args with [] -> html_encode s | _ -> fail_not_a_fun var)
+    | Fun f -> html_encode(f args)
     | Html _ | Fun_html _ -> invalid_arg(sprintf "A string is expected but \
 		 %S returns HTML" var)
 
   let subst_to_html b var args =
     match find b var with
     | String s -> (match args with
-                  | [] -> [Nethtml.Data s]
+                  | [] -> [Nethtml.Data(html_encode s)]
                   | _ -> fail_not_a_fun var)
     | Html h -> h
     | Fun_html f -> f args
-    | Fun f -> [Nethtml.Data(f args)]
+    | Fun f -> [Nethtml.Data(html_encode(f args))]
 end
 
 let subst_var b v =
@@ -575,7 +578,8 @@ let subst_var b v =
       if valid_ocaml_id v then Binding.subst_to_string b v args
       else invalid_arg(sprintf "Function name %S is not valid" v)
 
-let subst_string bindings s =
+(* Substitute variables in HTML elements arguments. *)
+let subst_arg bindings s =
   let buf = Buffer.create 100 in
   let add_string _ s = Buffer.add_string buf s in
   let add_var _ v = Buffer.add_string buf (subst_var bindings v) in
@@ -590,7 +594,7 @@ let subst_html bindings s =
 let rec subst_element bindings html = match html with
   | Nethtml.Data s -> subst_html bindings s
   | Nethtml.Element(el, args, content0) ->
-      let args, ml = split_args (subst_string bindings) [] args in
+      let args, ml = split_args (subst_arg bindings) [] args in
       if ml.content = "" then
         [Nethtml.Element(el, args, subst bindings content0)]
       else
