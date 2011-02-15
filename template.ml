@@ -235,10 +235,10 @@ type ocaml_args = {
 let is_ocaml_arg s =
   String.length s > 3 && s.[0] = 'm' && s.[1] = 'l' && s.[2] = ':'
 
-(* [split_args h ml [] all] go through the arguments [all], record the
+(* [split_args_set_ml h ml [] all] go through the arguments [all], record the
    "ml:*" arguments in [ml] and returns the other arguments.  These
    arguments possibly contain variables which will be recorded in [h]. *)
-let rec split_args parse_string ml args all = match all with
+let rec split_args_set_ml parse_string ml args all = match all with
   | [] -> args
   | (arg, v) :: tl ->
       if is_ocaml_arg arg then (
@@ -259,9 +259,15 @@ let rec split_args parse_string ml args all = match all with
                 ml.content <- v;  ml.args <- args;  ml.strip <- `Yes
             | _ -> failwith(sprintf "The variable name %S is not valid" v)
         end;
-        split_args parse_string ml args tl
+        split_args_set_ml parse_string ml args tl
       )
-      else split_args parse_string ml ((arg, parse_string v) :: args) tl
+      else
+        split_args_set_ml parse_string ml ((arg, parse_string v) :: args) tl
+
+let split_args parse_string args all =
+  let ml = { content = "";  args = [];  strip = `No } in
+  let args = split_args_set_ml parse_string ml args all in
+  args, ml
 
 let read_html fname =
   let fh = open_in fname in
@@ -273,13 +279,11 @@ let read_html fname =
 let rec parse_element h html = match html with
   | Nethtml.Data(s) -> [Data(parse_string h s)]
   | Nethtml.Element(el, args, content) ->
-      let ml = { content = "";  args = [];  strip = `No } in
-      let args = split_args (parse_string h) ml [] args in
+      let args, ml = split_args (parse_string h) [] args in
       if ml.content = "" then
         [Element(el, args, parse_html h content)]
       else if ml.content = "include" then (
         let content = List.concat(List.map (read_and_parse h) ml.args) in
-        eprintf "include\n%!";
         match ml.strip with
         | `No -> [Element(el, args, content)]
         | `Yes -> content
@@ -586,8 +590,7 @@ let subst_html bindings s =
 let rec subst_element bindings html = match html with
   | Nethtml.Data s -> subst_html bindings s
   | Nethtml.Element(el, args, content0) ->
-      let ml = { content = "";  args = [];  strip = `No } in
-      let args = split_args (subst_string bindings) ml [] args in
+      let args, ml = split_args (subst_string bindings) [] args in
       if ml.content = "" then
         [Nethtml.Element(el, args, subst bindings content0)]
       else
