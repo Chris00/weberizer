@@ -30,7 +30,14 @@ val stylesheet : t -> ?rel_base:bool -> string -> t
 (** [stylesheet tpl url] add the CSS file given by [url] to the
     stylesheet declarations.  If [rel_base] is true (the default),
     interpret [url] as a path relative to the base URL (as set in
-    [tpl]. *)
+    [tpl]). *)
+
+(* @hide javascript *)
+val javascript : t -> ?rel_base:bool -> string -> t
+(** [javascript tpl url] add the javascript file given by [url] to the
+    headers of the page.  If [rel_base] is [true] (the default),
+    interpret [url] as a path relative to the base URL (as set in
+    [tpl]). *)
 
 (* @hide web_counter *)
 val bbclone : t -> Template.Path.t -> t

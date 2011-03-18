@@ -55,6 +55,12 @@ let stylesheet tpl ?(rel_base=true) url =
     [s]
   end
 
+let javascript tpl ?(rel_base=true) url =
+  Set.javascript tpl begin fun t ->
+    let url = if rel_base then concat_path (Get.url_base t) url else url in
+    [Element("script", ["type", "text/javascript"; "src", url], [])]
+  end
+
 let separation_bar =
   Element("span", ["class", "separation-bar"], [Data "|"])
 
