@@ -40,7 +40,7 @@ upload:
 upload-html:
 	$(SCP) $(filter %.html %.css, $(FILES)) $(WEB)
 
-include Makefile.ocaml
+include ../Makefile.ocaml
 
 dist-clean::
 	$(RM) UMONS.ml UMONS.mli
