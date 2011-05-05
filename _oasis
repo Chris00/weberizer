@@ -15,13 +15,13 @@ Library template
   Modules:        Template
   BuildDepends:   netstring, str
 
-Executable compile
+Executable compile_template
   Path:           src/
-  MainIs:         compile.ml
+  MainIs:         compile_template.ml
   BuildDepends:   template
   CompiledObject: best
   BuildTools:     ocamlbuild
-  Install:        false
+  Install:        true
 
 Document API
   Title:           API reference for Template
