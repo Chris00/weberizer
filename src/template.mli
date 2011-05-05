@@ -57,7 +57,7 @@ val compile : string -> unit
       trailer code is taken from [fname].ml and [fname].mli for the
       implementation and interface respectively.  Moreover, to hide
       the signature of a template variable, say "var", one can add a
-      comment [(* @hide var *)] in [fname].mli.  Special annotations
+      comment [(* \@hide var *)] in [fname].mli.  Special annotations
       are added to the generated module implementation and interface
       so errors point back to [fname].ml and [fname].mli respectively. *)
 

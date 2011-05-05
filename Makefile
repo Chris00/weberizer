@@ -23,7 +23,7 @@ doc install uninstall reinstall:
 	ocaml setup.ml -$@
 
 upload-doc: doc
-	scp -C -p -r _build/src/API.docdir/ $(WEB)
+	scp -C -p -r _build/API.docdir/ $(WEB)
 
 # Make a tarball
 .PHONY: dist tar
