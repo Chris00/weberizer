@@ -20,3 +20,5 @@ README.txt
 myocamlbuild.ml
 setup.ml
 
+API.docdir
+API.odocl
