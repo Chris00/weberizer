@@ -4,9 +4,8 @@ PKG_TARBALL = $(PKGNAME)-$(PKGVERSION).tar.gz
 
 WEB = forge.ocamlcore.org:/home/groups/ocamlweb/htdocs/
 
-DISTFILES   = AUTHORS.txt INSTALL.txt README.txt COPYING.txt _oasis \
-  Makefile myocamlbuild.ml setup.ml config.ml _tags src/ \
-  $(wildcard demo/*.ml) demo/gammurc
+DISTFILES   = AUTHORS.txt INSTALL.txt README.txt _oasis \
+  Makefile myocamlbuild.ml setup.ml _tags src/ demo/
 
 .PHONY: all byte native configure doc install uninstall reinstall upload-doc
 
