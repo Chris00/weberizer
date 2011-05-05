@@ -1,0 +1,14 @@
+# OASIS_START
+# DO NOT EDIT (digest: b6307cc6bd3161bee153e378f83df504)
+# Library template
+"src": include
+# Executable compile
+<src/compile.{native,byte}>: use_template
+<src/compile.{native,byte}>: pkg_str
+<src/compile.{native,byte}>: pkg_netstring
+<src/*.ml{,i}>: use_template
+<src/*.ml{,i}>: pkg_str
+<src/*.ml{,i}>: pkg_netstring
+# OASIS_STOP
+
+<**/*.ml>: annot

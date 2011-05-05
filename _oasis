@@ -1,0 +1,32 @@
+#                                                               -*-conf-*-
+OASISFormat: 0.2
+Name:        template
+Version:     0.5
+Synopsis:    HTML templating system with various exports.
+Description: Template allows HTML templates to be compiled into OCaml modules.
+Authors:     Christophe Troestler
+License:     LGPL-3.0 with OCaml linking exception
+Plugins:     META (0.2), StdFiles (0.2)
+Homepage:    http://forge.ocamlcore.org/projects/ocamlweb/
+
+Library template
+  Path:           src/
+  BuildTools:  	  ocamlbuild
+  Modules:        Template
+  BuildDepends:   netstring, str
+
+Executable compile
+  Path:           src/
+  MainIs:         compile.ml
+  BuildDepends:   template
+  CompiledObject: best
+  BuildTools:     ocamlbuild
+  Install:        false
+
+Document API
+  Title:           API reference for Template
+  Type:            OCamlbuild (0.2)
+  InstallDir:      $docdir/api
+  BuildTools:      ocamldoc, ocamlbuild
+  XOCamlbuildPath: .
+  XOCamlbuildLibraries: template

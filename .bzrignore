@@ -1,3 +1,4 @@
+#								-*-conf-unix-*-
 *.annot
 *.cm[ioax]
 *.cmxa
@@ -7,3 +8,15 @@
 .depend.ocaml
 UMONS.ml
 UMONS.mli
+# OASIS & ocamlbuild
+_build
+*.native
+*.data
+*.log
+src/META
+src/template.mllib
+AUTHORS.txt
+README.txt
+myocamlbuild.ml
+setup.ml
+
