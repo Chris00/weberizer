@@ -14,7 +14,7 @@ _build
 *.data
 *.log
 src/META
-src/template.mllib
+src/weberizer.mllib
 AUTHORS.txt
 README.txt
 myocamlbuild.ml

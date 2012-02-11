@@ -1,32 +1,32 @@
 #                                                               -*-conf-*-
 OASISFormat: 0.2
-Name:        template
-Version:     0.5
+Name:        weberizer
+Version:     0.6
 Synopsis:    HTML templating system with various exports.
 Description: Template allows HTML templates to be compiled into OCaml modules.
 Authors:     Christophe Troestler
 License:     LGPL-3.0 with OCaml linking exception
 Plugins:     META (0.2), StdFiles (0.2)
-Homepage:    http://forge.ocamlcore.org/projects/ocamlweb/
+Homepage:    https://github.com/Chris00/weberizer
 
-Library template
+Library weberizer
   Path:           src/
   BuildTools:  	  ocamlbuild
-  Modules:        Template
+  Modules:        Weberizer
   BuildDepends:   netstring, str
 
-Executable compile_template
+Executable weberizer_compile
   Path:           src/
-  MainIs:         compile_template.ml
-  BuildDepends:   template
+  MainIs:         weberizer_compile.ml
+  BuildDepends:   weberizer
   CompiledObject: best
   BuildTools:     ocamlbuild
   Install:        true
 
 Document API
-  Title:           API reference for Template
+  Title:           API reference for Weberizer
   Type:            OCamlbuild (0.2)
   InstallDir:      $docdir/api
   BuildTools:      ocamldoc, ocamlbuild
   XOCamlbuildPath: .
-  XOCamlbuildLibraries: template
+  XOCamlbuildLibraries: weberizer

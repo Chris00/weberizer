@@ -1,6 +1,6 @@
 (* OASIS_START *)
-(* DO NOT EDIT (digest: ca77ceee30dd4c481c4fcc2947d2e67d) *)
-This is the INSTALL file for the template distribution.
+(* DO NOT EDIT (digest: 4d834f49d77aaa1a409b3699695e8592) *)
+This is the INSTALL file for the weberizer distribution.
 
 This package uses OASIS to generate its build system. See section OASIS for
 full information. 
@@ -11,7 +11,7 @@ Dependencies
 In order to compile this package, you will need:
 * ocaml for all, doc API
 * findlib
-* netstring for library template
+* netstring for library weberizer
 
 Installing
 ==========

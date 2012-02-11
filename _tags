@@ -1,12 +1,12 @@
 # OASIS_START
-# DO NOT EDIT (digest: 4070fc6319d6d60dd520ad92e0ea5c3f)
-# Library template
+# DO NOT EDIT (digest: d932f5e25fa621b62018937fc8dcdf43)
+# Library weberizer
 "src": include
-# Executable compile_template
-<src/compile_template.{native,byte}>: use_template
-<src/compile_template.{native,byte}>: pkg_str
-<src/compile_template.{native,byte}>: pkg_netstring
-<src/*.ml{,i}>: use_template
+# Executable weberizer_compile
+<src/weberizer_compile.{native,byte}>: use_weberizer
+<src/weberizer_compile.{native,byte}>: pkg_str
+<src/weberizer_compile.{native,byte}>: pkg_netstring
+<src/*.ml{,i}>: use_weberizer
 <src/*.ml{,i}>: pkg_str
 <src/*.ml{,i}>: pkg_netstring
 # OASIS_STOP
