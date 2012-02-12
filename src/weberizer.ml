@@ -699,7 +699,7 @@ struct
   let from_base p = p.from_base
 
   let parent p = match p.parent with
-    | None -> failwith "Template.Path.parent: Base directory, no parent"
+    | None -> failwith "Weberizer.Path.parent: Base directory, no parent"
     | Some d -> d
 
   let rec from_base_split_loop acc p = match p.parent with
@@ -782,7 +782,7 @@ struct
         navigation_dir from_d acc d lang
 
   let navigation p =
-    if p.is_dir then invalid_arg "Template.Path.navigation: no filename";
+    if p.is_dir then invalid_arg "Weberizer.Path.navigation: no filename";
     match p.parent with
     | None -> assert false (* a file must have a parent dir, possibly
                              the base one *)
@@ -800,7 +800,7 @@ struct
     | _ :: tl -> last_navigation tl
 
   let description p =
-    if p.is_dir then invalid_arg "Template.Path.description: no filename";
+    if p.is_dir then invalid_arg "Weberizer.Path.description: no filename";
     last_navigation (navigation p)
 
   (*
@@ -844,7 +844,7 @@ struct
     }
 
   let concat_file p fname =
-    if not p.is_dir then failwith "Template.Path.concat_file";
+    if not p.is_dir then failwith "Weberizer.Path.concat_file";
     { name = fname;  is_dir = false;
       full_path = concat p.full_path fname;
       from_base = p.from_base; (* no file *)
@@ -880,7 +880,7 @@ let rec mkdir_if_absent ?(perm=0o750) dir =
 let only_lower = Str.regexp "[a-z]+$"
 let check_lang l =
   if not(Str.string_match only_lower l 0) then
-    invalid_arg(sprintf "Template.iter_html: language %S not valid" l)
+    invalid_arg(sprintf "Weberizer.iter_html: language %S not valid" l)
 
 (* [has_allowed_ext fname exts] checks that [fname] ends with one of the
    extension in [exts]. *)
@@ -890,9 +890,9 @@ let rec has_allowed_ext fname exts = match exts with
 
 let iter_html ?(langs=["fr"]) ?(exts=[".html"]) ?(filter=(fun _ -> true)) base f =
   if not(Sys.is_directory base) then
-    invalid_arg "Template.iter_html: the base must be a directory";
+    invalid_arg "Weberizer.iter_html: the base must be a directory";
   match langs with
-  | [] -> invalid_arg "Template.iter_html: langs must be <> []"
+  | [] -> invalid_arg "Weberizer.iter_html: langs must be <> []"
   | default_lang :: _ ->
       List.iter check_lang langs;
       let filter_dir p = not(List.mem (Path.from_base p) langs)
