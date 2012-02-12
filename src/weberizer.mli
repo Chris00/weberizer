@@ -40,12 +40,13 @@ val compile_html :
       variables of the templates.  You set a variable [v] using the
       value of a variable [v'], you should use the construction [Set.v
       tpl (fun t -> ... Get.v' t ...)] (which returns a copy of [tpl]
-      with [v] set) to ensure that the value of [v'] at the time o
+      with [v] set) to ensure that the value of [v'] at the time of
       rendering is used and not the one present in [tpl] when [v] is
       set.  This is important to maintain the independence of
-      variables which may be set in any order (documenting that a
-      variable depends on others will lead to confusion and errors).
-      You should of course take care not to create dependency loops.
+      variables which may be set in any order (even if documented, the
+      fact that a variable depends on others will lead to confusion
+      and errors).  You should of course take care not to create
+      dependency loops.
 
       @param trailer_mli additional code to be appended to the .mli file.
       @param hide variables of the template that will not be present
