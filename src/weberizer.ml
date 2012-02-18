@@ -17,7 +17,7 @@ let is_valid_char c =
   ('0' <= c && c <= '9') || is_lowercase c || ('A' <= c && c <= 'Z') || c = '_'
 
 let rec is_digit_or_letter s i len =
-  i >= len || (is_valid_char s.[i] || is_digit_or_letter s (i+1) len)
+  i >= len || (is_valid_char s.[i] && is_digit_or_letter s (i+1) len)
 
 (* Check that the string is a valid OCaml identifier. *)
 let valid_ocaml_id s =
@@ -215,7 +215,7 @@ let parse_string h s =
   List.rev(parse_string_range add_string add_var [] s 0 0 (String.length s))
 
 
-(* Parse Nethtml document : search variables
+(* Parse Nethtml document : search for variables
  ***********************************************************************)
 
 type strip = [ `No | `Yes | `If_empty ]
