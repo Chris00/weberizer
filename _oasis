@@ -1,7 +1,7 @@
 #                                                               -*-conf-*-
 OASISFormat: 0.2
 Name:        weberizer
-Version:     0.6
+Version:     0.6.1
 Synopsis:    HTML templating system with various exports.
 Description: Template allows HTML templates to be compiled into OCaml modules.
 Authors:     Christophe Troestler
