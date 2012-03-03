@@ -818,13 +818,14 @@ struct
     let default_lang = match langs with d :: _ -> d | [] -> "" in
     let fbase, lang, ext_p = base_lang_ext_of_filename (filename p) in
     let lang = if lang = "" then default_lang else lang in
-    let path_base = concat (from_base p) fbase in
+    let path_base = Filename.concat (Filename.dirname (full p)) fbase in
     List.fold_right begin fun l trans ->
       let ext = if l = default_lang then ext_p else "." ^ l ^ ext_p in
       if Sys.file_exists(path_base ^ ext) then
         let url =
           if l = lang then ""
-          else sprintf "%s../%s/%s%s" (to_base p) l path_base ext_p in
+          else sprintf "%s../%s/%s%s" (to_base p) l
+                       (concat (from_base p) fbase) ext_p in
         (l, url) :: trans
       else trans
     end langs []
@@ -888,7 +889,7 @@ let rec has_allowed_ext fname exts = match exts with
   | [] -> false
   | ext :: tl -> Filename.check_suffix fname ext || has_allowed_ext fname tl
 
-let iter_html ?(langs=["fr"]) ?(exts=[".html"]) ?(filter=(fun _ -> true)) base f =
+let iter_html ?(langs=["en"]) ?(exts=[".html"]) ?(filter=(fun _ -> true)) base f =
   if not(Sys.is_directory base) then
     invalid_arg "Weberizer.iter_html: the base must be a directory";
   match langs with

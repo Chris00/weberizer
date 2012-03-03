@@ -179,8 +179,8 @@ sig
       [name] is a descriptive name of that directory of the path and
       [path] is the relative link to go from the location pointed by
       [p] to the directory.  If [filename p] is of the form
-      index.*.html, then only its directory is included in the
-      navigation information.
+      index.html or index.<lang>.html, then only its directory is
+      included in the navigation information.
 
       Descriptive names are based on the name of the directory or,
       if an index.<lang>.html file is present it is taken as its
