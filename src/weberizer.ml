@@ -889,7 +889,8 @@ let rec has_allowed_ext fname exts = match exts with
   | [] -> false
   | ext :: tl -> Filename.check_suffix fname ext || has_allowed_ext fname tl
 
-let iter_html ?(langs=["en"]) ?(exts=[".html"]) ?(filter=(fun _ -> true)) base f =
+let iter_html ?(langs=["en"]) ?(exts=[".html"]) ?(filter=(fun _ -> true))
+              ?(out_dir=fun x -> x) ?(out_ext=fun x -> x) base f =
   if not(Sys.is_directory base) then
     invalid_arg "Weberizer.iter_html: the base must be a directory";
   match langs with
@@ -904,9 +905,9 @@ let iter_html ?(langs=["en"]) ?(exts=[".html"]) ?(filter=(fun _ -> true)) base f
         let lang = if lang = "" then default_lang else lang in
         if List.mem lang langs then begin
           let html = f lang p in
-          let dir = Path.concat lang (Path.from_base p) in
+          let dir = Path.concat (out_dir lang) (Path.from_base p) in
           mkdir_if_absent dir;
-          write_html html (Filename.concat dir (fbase ^ ext))
+          write_html html (Filename.concat dir (fbase ^ out_ext ext))
         end
       end
 

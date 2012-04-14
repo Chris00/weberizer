@@ -196,11 +196,12 @@ end
 
 val iter_html : ?langs:string list ->
   ?exts: string list -> ?filter:(Path.t -> bool) ->
+  ?out_dir:(string -> string) -> ?out_ext:(string -> string) ->
   string -> (string -> Path.t -> html) -> unit
-(** [iter_html base f] iterates [f lang file] on all HTML files
-    under [base] (the argument of [f] is guaranteed to be a path to
-    a file).  The resulting HTML code is written under the directory
-    [lang], the subpath begin the relative path of the file
+(** [iter_html base f] iterates [f lang file] on all HTML files under
+    [base] (the argument of [f] is guaranteed to be a path to a file).
+    The resulting HTML code is written under the directory [out_dir
+    lang], the subpath begin the relative path of the file
     w.r.t. [base] and the filename is the original one with the
     language removed.  @raise Invalid_argument if [base] is not a
     directory.
@@ -209,13 +210,19 @@ val iter_html : ?langs:string list ->
     default one (for files that do not specify a language).
     @raise Invalid_argument if languages are not lowercase only.
 
-    @param the allowed file extensions.  Defaut: [[".html"]].  May
-    be useful, ofr example, if you want to deal PHP pages.
+    @param exts the allowed file extensions.  Defaut: [[".html"]].
+    May be useful, ofr example, if you want to deal PHP pages.
 
     @param filter examine the file of dir iff the condition [filter
     rel_dir f] holds on the relative path [rel_dir] from [root] and
     final file or dir [f].  Default: accept all [.html] files.
-    Files and dirs starting with a dot are {i always} excluded.  *)
+    Files and dirs starting with a dot are {i always} excluded.
+
+    @param out_dir a function s.t. [out_dir lang] gives the outpout
+    directory used for the language [lang].  Default: the identity.
+
+    @param out_ext a function to transform the output extension given
+    the input one.  Default: the identity. *)
 
 val relative_url_are_from_base : Path.t -> html -> html
 (** [relative_url_are_from_base path html] prefix all relative URLs
