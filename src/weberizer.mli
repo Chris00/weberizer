@@ -187,17 +187,23 @@ sig
       title (if any).  <lang> is determined according to the file
       pointed by [p] (if of the form name.<lang>.html). *)
 
-  val translations : langs: string list -> t -> (string * string) list
+  val translations : ?rel_dir: (string -> string -> string) ->
+                     langs: string list -> t -> (string * string) list
   (** [translations langs p] returns a list of couples [(lang, url)]
       for all translations of the file pointed by the path [p].
-      [langs] is the list of languages to examine, the first being
-      the default one (files with no explicit language). *)
+      [langs] is the list of languages to examine, the first being the
+      default one (files with no explicit language).
+
+      @param rel_dir is a function so that [rel_dir lang l] gives the
+      relative path from the base directory of the current language
+      [lang] of the file [p] to the base directory of the translation
+      in the language [l].  Default: [fun _ l -> "../" ^ l]. *)
 end
 
 val iter_html : ?langs:string list ->
-  ?exts: string list -> ?filter:(Path.t -> bool) ->
-  ?out_dir:(string -> string) -> ?out_ext:(string -> string) ->
-  string -> (string -> Path.t -> html) -> unit
+                ?exts: string list -> ?filter:(Path.t -> bool) ->
+                ?out_dir:(string -> string) -> ?out_ext:(string -> string) ->
+                string -> (string -> Path.t -> html) -> unit
 (** [iter_html base f] iterates [f lang file] on all HTML files under
     [base] (the argument of [f] is guaranteed to be a path to a file).
     The resulting HTML code is written under the directory [out_dir

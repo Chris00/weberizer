@@ -814,7 +814,7 @@ struct
     else if file = "" then dir
     else dir ^ "/" ^ file
 
-  let translations ~langs p =
+  let translations ?(rel_dir=fun _ l -> "../" ^ l) ~langs p =
     let default_lang = match langs with d :: _ -> d | [] -> "" in
     let fbase, lang, ext_p = base_lang_ext_of_filename (filename p) in
     let lang = if lang = "" then default_lang else lang in
@@ -824,7 +824,7 @@ struct
       if Sys.file_exists(path_base ^ ext) then
         let url =
           if l = lang then ""
-          else sprintf "%s../%s/%s%s" (to_base p) l
+          else sprintf "%s%s/%s%s" (to_base p) (rel_dir lang l)
                        (concat (from_base p) fbase) ext_p in
         (l, url) :: trans
       else trans
