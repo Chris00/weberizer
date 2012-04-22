@@ -2,7 +2,7 @@ PKGNAME	    = $(shell oasis query name)
 PKGVERSION  = $(shell oasis query version)
 PKG_TARBALL = $(PKGNAME)-$(PKGVERSION).tar.gz
 
-WEB = forge.ocamlcore.org:/home/groups/ocamlweb/htdocs/
+WEB = forge.ocamlcore.org:/home/groups/ocamlweb/htdocs/weberizer/
 
 DISTFILES   = AUTHORS.txt INSTALL.txt README.txt README.md _oasis \
   Makefile myocamlbuild.ml setup.ml _tags src/ demo/
@@ -32,11 +32,6 @@ dist tar: $(DISTFILES)
 	cp --parents -r $(DISTFILES) $(PKGNAME)-$(PKGVERSION)/
 	tar -zcvf $(PKG_TARBALL) $(PKGNAME)-$(PKGVERSION)
 	rm -rf $(PKGNAME)-$(PKGVERSION)
-
-
-.PHONY: svn
-svn:
-	bzr push svn+ssh://scm.ocamlcore.org/svnroot/ocamlweb/template
 
 .PHONY: clean distclean
 clean::
