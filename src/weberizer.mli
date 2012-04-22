@@ -76,15 +76,19 @@ val compile : string -> unit
 module Binding :
 sig
   type t
-  (** Mutable value holding a correspondence of a variable name to
-      its value (both being strings). *)
+  (** Mutable value holding a collection of mappings from
+      names of variables to their values (both being strings). *)
 
   exception Not_found of string
   (** [Not_found var] is raised if the variable [var] is not found
       in the binding. *)
 
   val make : unit -> t
+  (** [make()] @returns a new empty collection of bindings. *)
+
   val copy : t -> t
+  (** [copy b] @returns a new collection of bindings initially
+      containing the same bindings as [b]. *)
 
   val string : t -> string -> string -> unit
   (** [string b var s] add to the binding [var] -> [s] to [b]. *)
