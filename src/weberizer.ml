@@ -623,8 +623,10 @@ let read ?bindings fname =
 (* Utilities
  ***********************************************************************)
 
-let write_html ?(doctype=true) html fname =
-  let oc = new Netchannels.output_channel (open_out fname) in
+let write_html ?(doctype=true) ?(perm=0o644) html fname =
+  let mode = [Open_creat; Open_wronly; Open_trunc; Open_text] in
+  let perm = perm land 0o666 in (* rm exec bits *)
+  let oc = new Netchannels.output_channel (open_out_gen mode perm fname) in
   if doctype then
     oc#output_string
       "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\"
@@ -890,7 +892,7 @@ let rec has_allowed_ext fname exts = match exts with
   | ext :: tl -> Filename.check_suffix fname ext || has_allowed_ext fname tl
 
 let iter_html ?(langs=["en"]) ?(exts=[".html"]) ?(filter=(fun _ -> true))
-              ?(out_dir=fun x -> x) ?(out_ext=fun x -> x) base f =
+              ?perm ?(out_dir=fun x -> x) ?(out_ext=fun x -> x) base f =
   if not(Sys.is_directory base) then
     invalid_arg "Weberizer.iter_html: the base must be a directory";
   match langs with
@@ -906,8 +908,8 @@ let iter_html ?(langs=["en"]) ?(exts=[".html"]) ?(filter=(fun _ -> true))
         if List.mem lang langs then begin
           let html = f lang p in
           let dir = Path.concat (out_dir lang) (Path.from_base p) in
-          mkdir_if_absent dir;
-          write_html html (Filename.concat dir (fbase ^ out_ext ext))
+          mkdir_if_absent ?perm dir;
+          write_html ?perm html (Filename.concat dir (fbase ^ out_ext ext))
         end
       end
 

@@ -116,11 +116,14 @@ val read : ?bindings:Binding.t -> string -> html
 
 (** {1 Utilities} *)
 
-val write_html : ?doctype:bool -> html -> string -> unit
+val write_html : ?doctype:bool -> ?perm: int -> html -> string -> unit
 (** [write_html html fname] writes the textual representation of the
     [html] to the file [fname].
 
-    @param doctype whether to output a doctype (default: [true]). *)
+    @param doctype whether to output a doctype (default: [true]).
+    @param perm the permissions of the created file (default: [0o644]).
+                Whatever permissions you specify, the executable bits are
+                removed.  *)
 
 val body_of : html -> html
 (** [body_of html] returns the body of the HTML document or the
@@ -200,10 +203,11 @@ sig
       in the language [l].  Default: [fun _ l -> "../" ^ l]. *)
 end
 
-val iter_html : ?langs:string list ->
-                ?exts: string list -> ?filter:(Path.t -> bool) ->
-                ?out_dir:(string -> string) -> ?out_ext:(string -> string) ->
-                string -> (string -> Path.t -> html) -> unit
+val iter_html :
+  ?langs:string list ->
+  ?exts: string list -> ?filter:(Path.t -> bool) ->
+  ?perm: int -> ?out_dir:(string -> string) -> ?out_ext:(string -> string) ->
+  string -> (string -> Path.t -> html) -> unit
 (** [iter_html base f] iterates [f lang file] on all HTML files under
     [base] (the argument of [f] is guaranteed to be a path to a file).
     The resulting HTML code is written under the directory [out_dir
