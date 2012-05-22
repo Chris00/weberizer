@@ -43,8 +43,9 @@ val compile_html :
     module with functions to fill the variables of the template.  The
     module will be in files [module_name].ml and [module_name].mli.
 
-    @param module_name the name of the generated module.  By default,
-    it is the basename of [fname] without extension.
+    @param module_name the name of the generated module, possibly
+    preceded by a path to indicate where to save the module file.  By
+    default, it is the basename of [fname] without its extension.
 
     @param trailer_ml additional code to be appended to the .ml file.
     This code can use the functions of the interface to set variables
@@ -63,7 +64,7 @@ val compile_html :
     in the module interface.  This is only interesting if these
     variables are used in [trailer_ml] functions. *)
 
-val compile : string -> unit
+val compile : ?module_name:string -> string -> unit
 (** [compile fname] does the same as [compile_html] except that
     trailer code is taken from [fname].ml and [fname].mli for the
     implementation and interface respectively.  Moreover, to hide

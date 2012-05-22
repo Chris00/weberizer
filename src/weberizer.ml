@@ -384,7 +384,8 @@ and write_rendering_node fm h tpl = match tpl with
 
 let compile_html ?trailer_ml ?trailer_mli ?(hide=[]) ?module_name fname =
   let module_name = match module_name with
-    | None -> (try Filename.chop_extension fname with _ -> fname)
+    | None -> (try Filename.basename(Filename.chop_extension fname)
+              with _ -> fname)
     | Some n -> n (* FIXME: check valid module name *) in
   (* Parse *)
   let h = Var.make() in
@@ -515,11 +516,11 @@ let vars_to_hide mli =
       with Not_found ->
         !acc, Some(Str.global_substitute hide_re copy_newlines mli)
 
-let compile f =
+let compile ?module_name f =
   let trailer_ml = maybe_content (f ^ ".ml") in
   let trailer_mli = maybe_content (f ^ ".mli") in
   let hide, trailer_mli = vars_to_hide trailer_mli in
-  compile_html ?trailer_ml ?trailer_mli ~hide f
+  compile_html ?trailer_ml ?trailer_mli ~hide ?module_name f
 
 
 (* Parsing with direct substitution
