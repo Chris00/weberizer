@@ -48,16 +48,17 @@ val compile_html :
     default, it is the basename of [fname] without its extension.
 
     @param trailer_ml additional code to be appended to the .ml file.
-    This code can use the functions of the interface to set variables
-    of the templates.  You set a variable [v] using the value of a
-    variable [v'], you should use the construction [Set.v tpl (fun t ->
-    ... Get.v' t ...)] (which returns a copy of [tpl] with [v] set) to
-    ensure that the value of [v'] at the time of rendering is used and
-    not the one present in [tpl] when [v] is set.  This is important
-    to maintain the independence of variables which may be set in any
-    order (even if documented, the fact that a variable depends on
-    others will lead to confusion and errors).  You should of course
-    take care not to create dependency loops.
+    This code can use the functions of the interface (without the
+    module prefix) to set variables of the template.  You set a
+    variable [v] using the value of a variable [v'], you should use
+    the construction [Set.v tpl (fun t -> ... Get.v' t ...)] (which
+    returns a copy of [tpl] with [v] set) to ensure that the value of
+    [v'] at the time of rendering is used and not the one present in
+    [tpl] when [v] is set.  This is important to maintain the
+    independence of variables which may be set in any order (even if
+    documented, the fact that a variable depends on others will lead
+    to confusion and errors).  If you use [Get.v] inside [Set.v],
+    [Get.v] will return the previous value of the variable [v].
 
     @param trailer_mli additional code to be appended to the .mli file.
     @param hide variables of the template that will not be present

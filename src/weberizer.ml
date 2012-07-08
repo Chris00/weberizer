@@ -112,15 +112,15 @@ struct
   let ty h v = (Hashtbl.find h v).ty
 
   let write_code_eval fm v args =
-    fprintf fm "(eval t t.%s [" v;
+    fprintf fm "(Eval.%s t [" v;
     List.iter (fun a -> fprintf fm "%S;" a) args;
     fprintf fm "])"
 
   (* See [compile_html] where [eval] and [t] are defined in the
      generated module. *)
   let write_code_html fm h v args = match ty h v with
-    | HTML -> fprintf fm "eval t t.%s" v
-    | String -> fprintf fm "[Nethtml.Data(eval t t.%s)]" v
+    | HTML -> fprintf fm "Eval.%s t" v
+    | String -> fprintf fm "[Nethtml.Data(Eval.%s t)]" v
     | Fun_html -> write_code_eval fm v args;
     | Fun ->
         fprintf fm "[Nethtml.Data(";
@@ -135,7 +135,7 @@ struct
      @return the variable name to use. *)
   let binding_no = ref 0
   let write_binding fm h v args = match ty h v with
-    | HTML | String -> "eval t t." ^ v
+    | HTML | String -> sprintf "Eval.%s t" v
     | Fun_html | Fun ->
         incr binding_no;
         let n = !binding_no in
@@ -308,9 +308,9 @@ and read_and_parse h fname = parse_html h (read_html fname)
 
 let write_string_or_var fh s = match s with
   | String s -> fprintf fh "%S" s
-  | Var v -> fprintf fh "eval t t.%s" v
+  | Var v -> fprintf fh "Eval.%s t" v
   | Fun(f, args) ->
-      fprintf fh "eval t t.%s " f;
+      fprintf fh "Eval.%s t " f;
       List.iter (fun v -> fprintf fh "%S " v) args
 
 let write_subst_string fh s = match s with
@@ -393,14 +393,16 @@ let compile_html ?trailer_ml ?trailer_mli ?(hide=[]) ?module_name fname =
   (* Output implementation *)
   let fh = open_out (module_name ^ ".ml") in
   let fm = formatter_of_out_channel fh in
-  fprintf fm "(* Module generated from the template %s. *)\n@\n" fname;
-  fprintf fm "type html = Nethtml.document list\n\n";
-  fprintf fm "type t = {\n";
+  fprintf fm "(* Module generated from the template %s. *)@\n@\n" fname;
+  fprintf fm "type html = Nethtml.document list@\n@\n";
+  fprintf fm "@[<2>type t = {@\n";
   Var.iter h (fun v t ->
-                fprintf fm "  %s: %s delay;\n" v (Var.type_code t.Var.ty);
+                fprintf fm "%s: %s delay;@\n" v (Var.type_code t.Var.ty);
              );
-  fprintf fm "}\nand 'a delay = Val of 'a | Delay of (t -> 'a);;\n\n";
-  fprintf fm "let eval t v = match v with Val a -> a | Delay f -> f t\n";
+  fprintf fm "@]}@\n@[<2>and 'a delay =@\n\
+              | Val of 'a@\n\
+              | Delay of (t -> 'a) * 'a delay\
+              @]@\n@\n";
   (* See [Var.type_to_string] for the names: *)
   fprintf fm "let default_html = Val []\n";
   fprintf fm "let default_string = Val \"\"\n";
@@ -419,28 +421,45 @@ let compile_html ?trailer_ml ?trailer_mli ?(hide=[]) ?module_name fname =
      use of the [Set] module to be able to access the values through
      [Get] functions. The coercing submodule is named [Variable] to
      have readable error messages. *)
-  fprintf fm "\n@[<2>module Variable : sig@\ntype get@\n\
-              @[<2>module Get : sig@\n";
-  Var.iter h begin fun v t ->
-    fprintf fm "val %s : get -> %s@\n" v (Var.type_code t.Var.ty)
-  end;
-  fprintf fm "end@]@\n@[<2>module Set : sig@\n";
-  Var.iter h begin fun v t ->
-    fprintf fm "val %s : t -> (get -> %s) -> t@\n" v (Var.type_code t.Var.ty)
-  end;
-  fprintf fm "end@]@\nend = struct@\ntype get = t@\n";
-  fprintf fm "@[<2>module Get = struct@\n";
-  Var.iter h (fun v _ -> fprintf fm "let %s t = eval t t.%s@\n" v v);
-  fprintf fm "end@]@\n@[<2>module Set = struct@\n";
-  Var.iter h (fun v _ ->
-                fprintf fm "let %s t f = { t with %s = Delay f }@\n" v v
+  fprintf fm "\n@[<2>module Variable : sig@\ntype get@\n";
+  fprintf fm "@[<2>module Eval : sig@\n";
+  Var.iter h (fun v t ->
+              fprintf fm "val %s : t -> %s@\n" v (Var.type_code t.Var.ty)
              );
+  fprintf fm "end@]@\n@[<2>module Get : sig@\n";
+  Var.iter h (fun v t ->
+              fprintf fm "val %s : get -> %s@\n" v (Var.type_code t.Var.ty)
+             );
+  fprintf fm "end@]@\n@[<2>module Set : sig@\n";
+  Var.iter h (fun v t ->
+              fprintf fm "val %s : t -> (get -> %s) -> t@\n"
+                      v (Var.type_code t.Var.ty)
+             );
+  fprintf fm "end@]@\nend = struct@\n";
+  fprintf fm "@[<2>module Eval = struct@\n";
+  (* [Eval.x] must restore the previous value of [x] in the template
+     for [f] in case [Get.x] is called again in inside [f] (we do not
+     want to rerun [f] as it would create an infinite loop). *)
+  let get v _ =
+    fprintf fm "@[<2>let %s t = match t.%s with@\n\
+                | Val a -> a@\n\
+                | Delay (f, previous) -> f { t with %s = previous }\
+                @]@\n" v v v in
+  Var.iter h get;
+  fprintf fm "@]end@\ntype get = t@\n";
+  (* [Get.x] = [Eval.x] except that there is a type coercion to
+     prevent misuse. *)
+  fprintf fm "module Get = Eval@\n";
+  fprintf fm "@[<2>module Set = struct@\n";
+  let set v _ =
+    fprintf fm "let %s t f = { t with %s = Delay(f, t.%s) }@\n" v v v in
+  Var.iter h set;
   fprintf fm "end@]@\nend@]@\nopen Variable@\n@\n";
   write_rendering_fun fm h tpl;
   begin match trailer_ml with
-  | None -> ()
-  | Some txt ->
-      fprintf fm "(* ---------- Trailer -------------------- *)@\n%s" txt
+        | None -> ()
+        | Some txt ->
+           fprintf fm "(* ---------- Trailer -------------------- *)@\n%s" txt
   end;
   fprintf fm "@?"; (* flush *)
   close_out fh;
