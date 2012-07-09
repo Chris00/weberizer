@@ -80,6 +80,12 @@ let is_prefix p s =
   let len_p = String.length p in
   len_p <= String.length s  &&  is_prefix_loop p s 0 len_p
 
+let rec end_with_loop s p i ofs =
+  i < 0 || (p.[i] = s.[ofs + i] && end_with_loop s p (i-1) ofs)
+
+let end_with s p =
+  let len_p = String.length p and len_s = String.length s in
+  len_p <= len_s  &&  end_with_loop s p (len_p - 1) (len_s - len_p)
 
 (* Parse strings
  *************************************************************************)
@@ -841,16 +847,23 @@ struct
     let fbase, lang, ext_p = base_lang_ext_of_filename (filename p) in
     let lang = if lang = "" then default_lang else lang in
     let path_base = Filename.concat (Filename.dirname (full p)) fbase in
-    List.fold_right begin fun l trans ->
+    let add_lang l trans =
       let ext = if l = default_lang then ext_p else "." ^ l ^ ext_p in
       if Sys.file_exists(path_base ^ ext) then
         let url =
           if l = lang then ""
-          else sprintf "%s%s/%s%s" (to_base p) (rel_dir lang l)
-                       (concat (from_base p) fbase) ext_p in
+          else
+            (* Remove "index" if it terminates the path (regardless of
+               the extension [ext_p]). *)
+            let to_path =
+              if end_with fbase "index" then
+                concat (from_base p)
+                       (String.sub fbase 0 (String.length fbase - 5))
+              else (concat (from_base p) fbase) ^ ext_p in
+            sprintf "%s%s/%s" (to_base p) (rel_dir lang l) to_path in
         (l, url) :: trans
-      else trans
-    end langs []
+      else trans in
+    List.fold_right add_lang langs []
 
   (*
    * Recursively browse dirs
