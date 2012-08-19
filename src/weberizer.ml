@@ -10,6 +10,8 @@ type html = Nethtml.document list
 (* Helper functions
  ***********************************************************************)
 
+let identity x = x
+
 let html_encode = Netencoding.Html.encode ~in_enc:`Enc_utf8 ()
 
 let is_lowercase c = 'a' <= c && c <= 'z'
@@ -137,7 +139,7 @@ struct
     | HTML | Fun_html -> fprintf fm "[]"
     | String | Fun -> fprintf fm "\"\""
 
-  (* Write a binding if needed to avoid multiple evaluations of a function.
+  (* Write a let-binding if needed to avoid multiple evaluations of a function.
      @return the variable name to use. *)
   let binding_no = ref 0
   let write_binding fm h v args = match ty h v with
@@ -556,8 +558,8 @@ struct
   type data =
     | Html of html
     | String of string
-    | Fun_html of (string list -> html)
-    | Fun of (string list -> string)
+    | Fun_html of (string list -> html -> html)
+    | Fun of (string list -> html -> string)
 
   type t = (string, data) Hashtbl.t
 
@@ -580,70 +582,100 @@ struct
     invalid_arg(sprintf "%S is bound to a variable but used \
 		as a function in the HTML template" var)
 
-  let subst_to_string b var args =
+  let subst_to_string b whole_html var args =
     match find b var with
     | String s -> (match args with [] -> html_encode s | _ -> fail_not_a_fun var)
-    | Fun f -> html_encode(f args)
-    | Html _ | Fun_html _ -> invalid_arg(sprintf "A string is expected but \
-		 %S returns HTML" var)
+    | Fun f -> html_encode(f args whole_html)
+    | Html _ | Fun_html _ ->
+       invalid_arg(sprintf "Weberizer.Binding.subst_to_string: \
+                            A string is expected but %S returns HTML" var)
 
-  let subst_to_html b var args =
+  let subst_to_html b whole_html var args =
     match find b var with
     | String s -> (match args with
                   | [] -> [Nethtml.Data(html_encode s)]
                   | _ -> fail_not_a_fun var)
     | Html h -> h
-    | Fun_html f -> f args
-    | Fun f -> [Nethtml.Data(html_encode(f args))]
+    | Fun_html f -> f args whole_html
+    | Fun f -> [Nethtml.Data(html_encode(f args whole_html))]
 end
 
-let subst_var b v =
+(* Perform all includes first -- so other bindings receive the HTML
+   were the substitutions have been made.  All relative filenames are
+   resolved w.r.t. the [base]. *)
+let rec perform_includes_el base = function
+  | Nethtml.Data(_) as e -> [e]
+  | Nethtml.Element(el, args, _) as e ->
+     let args, ml = split_args identity [] args in
+     if ml.content <> "include" then [e]
+     else
+       (* Use the filename location as the new base since this file
+          was prepared without knowing from where it will be included. *)
+       let include_file fn =
+         let fn = if Filename.is_relative fn then Filename.concat base fn
+                  else fn in
+         perform_includes (Filename.dirname fn) (read_html fn) in
+       let content = List.concat(List.map include_file ml.args) in
+       match ml.strip with
+       | `No | `If_empty -> [Nethtml.Element(el, args, content)]
+       | `Yes -> content
+
+and perform_includes base html =
+  List.concat(List.map (perform_includes_el base) html)
+
+
+let subst_var b whole_html v =
   match split_on_spaces v with
   | [] | "" :: _ -> invalid_arg "Empty variables are not allowed"
   | v :: args ->
-      if valid_ocaml_id v then Binding.subst_to_string b v args
+      if valid_ocaml_id v then Binding.subst_to_string b whole_html v args
       else invalid_arg(sprintf "Function name %S is not valid" v)
 
 (* Substitute variables in HTML elements arguments. *)
-let subst_arg bindings s =
+let subst_arg bindings whole_html s =
   let buf = Buffer.create 100 in
   let add_string _ s = Buffer.add_string buf s in
-  let add_var _ v = Buffer.add_string buf (subst_var bindings v) in
+  let add_var _ v = Buffer.add_string buf (subst_var bindings whole_html v) in
   parse_string_range add_string add_var () s 0 0 (String.length s);
   Buffer.contents buf
 
-let subst_html bindings s =
+let subst_to_html bindings whole_html s =
   let add_string l s = Nethtml.Data s :: l in
-  let add_var l v = Nethtml.Data(subst_var bindings v) :: l in
+  let add_var l v = Nethtml.Data(subst_var bindings whole_html v) :: l in
   List.rev(parse_string_range add_string add_var [] s 0 0 (String.length s))
 
-let rec subst_element bindings html = match html with
-  | Nethtml.Data s -> subst_html bindings s
+let rec subst_element bindings whole_html = function
+  | Nethtml.Data s -> subst_to_html bindings whole_html s
   | Nethtml.Element(el, args, content0) ->
-      let args, ml = split_args (subst_arg bindings) [] args in
+      let args, ml = split_args (subst_arg bindings whole_html) [] args in
       if ml.content = "" then
-        [Nethtml.Element(el, args, subst bindings content0)]
+        [Nethtml.Element(el, args, subst_html bindings whole_html content0)]
       else
+        (* "include"s are supposed to be done already. *)
         let content =
-          if ml.content = "include" then
-            List.concat(List.map (fun f -> subst bindings (read_html f)) ml.args)
-          else
-            Binding.subst_to_html bindings ml.content ml.args in
+          Binding.subst_to_html bindings whole_html ml.content ml.args in
         match ml.strip with
         | `No -> [Nethtml.Element(el, args, content)]
         | `Yes -> content
         | `If_empty -> (if content = [] then []
                        else [Nethtml.Element(el, args, content)])
 
-and subst bindings html =
-  List.concat(List.map (subst_element bindings) html)
+and subst_html bindings whole_html html =
+  List.concat(List.map (subst_element bindings whole_html) html)
 
+(* Function bindings receive the pristine HTML in case they want to
+   parse it to generate data (e.g. a table of content). *)
+let subst ?base bindings html =
+  let base = match base with None -> Sys.getcwd() | Some p -> p in
+  let html = perform_includes base html in
+  subst_html bindings html html
 
-let read ?bindings fname =
-  let html = read_html fname in
+let read ?base ?bindings fname =
+  let base = match base with None -> Filename.dirname fname | Some p -> p in
+  let html = perform_includes base (read_html fname) in
   match bindings with
   | None -> html
-  | Some b -> subst b html
+  | Some b -> subst ~base b html
 
 
 (* Utilities

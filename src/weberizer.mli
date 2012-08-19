@@ -96,23 +96,29 @@ sig
   (** [string b var s] add to the binding [var] -> [s] to [b]. *)
   val html : t -> string -> html -> unit
   (** [html b var h] add to the binding [var] -> [h] to [b]. *)
-  val fun_html : t -> string -> (string list -> html) -> unit
+  val fun_html : t -> string -> (string list -> html -> html) -> unit
   (** [fun_html b var f] add to the binding [var] -> [f] to [b]. *)
-  val fun_string : t -> string -> (string list -> string) -> unit
+  val fun_string : t -> string -> (string list -> html -> string) -> unit
   (** [fun_string b var f] add to the binding [var] -> [f] to [b]. *)
 end
 
-val subst : Binding.t -> html -> html
+val subst : ?base: string -> Binding.t -> html -> html
 (** [subst b html] return [html] where all variables are substituted
-    according to the bindings [b]
+    according to the bindings [b].
 
+    @param base All relative file names in "include" directives are
+    considered to be relative to [base].  Default: the current working
+    directory.
     @raise Invalid_argument if variable names are not valid or
     associated values do not correspond to their usage. *)
 
-val read : ?bindings:Binding.t -> string -> html
+val read : ?base: string -> ?bindings:Binding.t -> string -> html
 (** [read fname] reads the file [fname] and returns its content in a
     structured form.
 
+    @param base All relative file names in "include" directives are
+    considered to be relative to [base].  Default: the [Filename.dirname]
+    of [fname].
     @param bindings if provided, perform the substitutions it
     mandates.  Otherwise, the "raw" HTML is returned (this is the
     default).
