@@ -1,14 +1,27 @@
 # OASIS_START
-# DO NOT EDIT (digest: d932f5e25fa621b62018937fc8dcdf43)
+# DO NOT EDIT (digest: 056d4780f8feae0755d50f910c056c5c)
+# Ignore VCS directories, you can use the same kind of rule outside 
+# OASIS_START/STOP if you want to exclude directories that contains 
+# useless stuff for the build process
+<**/.svn>: -traverse
+<**/.svn>: not_hygienic
+".bzr": -traverse
+".bzr": not_hygienic
+".hg": -traverse
+".hg": not_hygienic
+".git": -traverse
+".git": not_hygienic
+"_darcs": -traverse
+"_darcs": not_hygienic
 # Library weberizer
-"src": include
+"src/weberizer.cmxs": use_weberizer
 # Executable weberizer_compile
 <src/weberizer_compile.{native,byte}>: use_weberizer
-<src/weberizer_compile.{native,byte}>: pkg_str
 <src/weberizer_compile.{native,byte}>: pkg_netstring
+<src/weberizer_compile.{native,byte}>: pkg_str
 <src/*.ml{,i}>: use_weberizer
-<src/*.ml{,i}>: pkg_str
 <src/*.ml{,i}>: pkg_netstring
+<src/*.ml{,i}>: pkg_str
 # OASIS_STOP
 
 <**/*.ml>: annot
