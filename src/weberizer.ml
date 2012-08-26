@@ -605,10 +605,10 @@ end
    resolved w.r.t. the [base]. *)
 let rec perform_includes_el base = function
   | Nethtml.Data(_) as e -> [e]
-  | Nethtml.Element(el, args, content) ->
-     let args, ml = split_args identity [] args in
+  | Nethtml.Element(el, args0, content0) ->
+     let args, ml = split_args identity [] args0 in
      if ml.content <> "include" then
-       [Nethtml.Element(el, args, perform_includes base content)]
+       [Nethtml.Element(el, args0, perform_includes base content0)]
      else
        (* Use the filename location as the new base since this file
           was prepared without knowing from where it will be included. *)
