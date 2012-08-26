@@ -299,7 +299,7 @@ let rec parse_element h html = match html with
       | `No -> [Element(el, args, content)]
       | `Yes -> content
       | `If_empty -> (if content = [] then []
-        else [Element(el, args, content)])
+                     else [Element(el, args, content)])
     )
     else (
       Var.add h ml.content (if ml.args = [] then Var.HTML else Var.Fun_html);
@@ -605,9 +605,10 @@ end
    resolved w.r.t. the [base]. *)
 let rec perform_includes_el base = function
   | Nethtml.Data(_) as e -> [e]
-  | Nethtml.Element(el, args, _) as e ->
+  | Nethtml.Element(el, args, content) ->
      let args, ml = split_args identity [] args in
-     if ml.content <> "include" then [e]
+     if ml.content <> "include" then
+       [Nethtml.Element(el, args, perform_includes base content)]
      else
        (* Use the filename location as the new base since this file
           was prepared without knowing from where it will be included. *)
