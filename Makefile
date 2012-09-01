@@ -41,4 +41,4 @@ clean::
 distclean:
 	ocaml setup.ml -distclean
 	$(RM) $(wildcard *.ba[0-9] *.bak *~ *.odocl)
-	$(RM) setup.ml myocamlbuild.ml AUTHORS.txt README.txt
+	$(RM) setup.ml myocamlbuild.ml AUTHORS.txt
