@@ -21,8 +21,8 @@
       and replaced by the content.
     - [ml:strip="if empty"] says that the HTML tag should be removed
       only if the replacement content is empty.
-    - [ml:replace="v"] is like [ml:content="v"] except that it adds
-      [ml:strip="true"].
+    - [ml:replace="v"] is the same as [ml:content="v"] except that it
+      adds [ml:strip="true"].
 
     A special value of <ident> is "include".  It serves to include the
     files passed as arguments and does not define a new function.
@@ -96,8 +96,11 @@ sig
   (** [string b var s] add to the binding [var] -> [s] to [b]. *)
   val html : t -> string -> html -> unit
   (** [html b var h] add to the binding [var] -> [h] to [b]. *)
-  val fun_html : t -> string -> (string list -> html -> html) -> unit
-  (** [fun_html b var f] add to the binding [var] -> [f] to [b]. *)
+  val fun_html : t -> string ->
+                 (string list -> content:html -> html -> html) -> unit
+  (** [fun_html b var f] add to the binding [var] -> [f] to [b].
+      [content] is the html that is in the tag and which is going
+      to be replaced.  It can be used as a structured argument. *)
   val fun_string : t -> string -> (string list -> html -> string) -> unit
   (** [fun_string b var f] add to the binding [var] -> [f] to [b]. *)
 end

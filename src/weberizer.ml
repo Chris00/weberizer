@@ -558,7 +558,7 @@ struct
   type data =
     | Html of html
     | String of string
-    | Fun_html of (string list -> html -> html)
+    | Fun_html of (string list -> content:html -> html -> html)
     | Fun of (string list -> html -> string)
 
   type t = (string, data) Hashtbl.t
@@ -587,16 +587,17 @@ struct
     | String s -> (match args with [] -> html_encode s | _ -> fail_not_a_fun var)
     | Fun f -> html_encode(f args whole_html)
     | Html _ | Fun_html _ ->
-       invalid_arg(sprintf "Weberizer.Binding.subst_to_string: \
-                            A string is expected but %S returns HTML" var)
+       invalid_arg(sprintf "Weberizer.Binding: The binding %S returns HTML \
+                            but is used at a place where only strings are \
+                            allowed" var)
 
-  let subst_to_html b whole_html var args =
+  let subst_to_html b ~content whole_html var args =
     match find b var with
     | String s -> (match args with
                   | [] -> [Nethtml.Data(html_encode s)]
                   | _ -> fail_not_a_fun var)
     | Html h -> h
-    | Fun_html f -> f args whole_html
+    | Fun_html f -> f args ~content whole_html
     | Fun f -> [Nethtml.Data(html_encode(f args whole_html))]
 end
 
@@ -647,19 +648,20 @@ let subst_to_html bindings whole_html s =
 
 let rec subst_element bindings whole_html = function
   | Nethtml.Data s -> subst_to_html bindings whole_html s
-  | Nethtml.Element(el, args, content0) ->
+  | Nethtml.Element(el, args, content) ->
       let args, ml = split_args (subst_arg bindings whole_html) [] args in
       if ml.content = "" then
-        [Nethtml.Element(el, args, subst_html bindings whole_html content0)]
+        [Nethtml.Element(el, args, subst_html bindings whole_html content)]
       else
         (* "include"s are supposed to be done already. *)
-        let content =
-          Binding.subst_to_html bindings whole_html ml.content ml.args in
+        let new_content =
+          Binding.subst_to_html bindings ~content whole_html
+                                ml.content ml.args in
         match ml.strip with
-        | `No -> [Nethtml.Element(el, args, content)]
-        | `Yes -> content
-        | `If_empty -> (if content = [] then []
-                       else [Nethtml.Element(el, args, content)])
+        | `No -> [Nethtml.Element(el, args, new_content)]
+        | `Yes -> new_content
+        | `If_empty -> (if new_content = [] then []
+                       else [Nethtml.Element(el, args, new_content)])
 
 and subst_html bindings whole_html html =
   List.concat(List.map (subst_element bindings whole_html) html)
