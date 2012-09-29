@@ -576,21 +576,38 @@ struct
     | Fun_html of ([`content| `page] Context.t -> string list -> html)
     | Fun of ([`page] Context.t -> string list -> string)
 
-  type t = (string, data) Hashtbl.t
+  type t = { var: (string, data) Hashtbl.t;
+             mutable on_error: string (* var *) -> exn -> unit }
 
-  let make () = Hashtbl.create 20
-  let copy = Hashtbl.copy
+  let make () =
+    let on_error v e =
+      Printf.eprintf "ERROR: Weberizer.Binding: $(%s) raised %S.\n%!"
+                     v (Printexc.to_string e) in
+    { var = Hashtbl.create 20; on_error }
 
-  let string b var s = Hashtbl.add b var (String s)
-  let html b var h = Hashtbl.add b var (Html h)
-  let fun_html b var f = Hashtbl.add b var (Fun_html f)
-  let fun_string b var f = Hashtbl.add b var (Fun f)
+  let copy b = { var = Hashtbl.copy b.var;  on_error = b.on_error }
+
+  let on_error b f = b.on_error <- f
+
+  let string b var s = Hashtbl.add b.var var (String s)
+  let html b var h = Hashtbl.add b.var var (Html h)
+  let fun_html b var f = Hashtbl.add b.var var (Fun_html f)
+  let fun_string b var f = Hashtbl.add b.var var (Fun f)
 
   exception Std_Not_found = Not_found
   exception Not_found of string
 
+  (* Error message included in the HTML and possibly displayed to the
+      user.  Should not contain confidential information. *)
+  let error_message var =
+    Printf.sprintf "The function associated to $(%s) raised an exception" var
+
+  let html_error_message var =
+    [Nethtml.Element("span", ["class", "weberizer-error"],
+                     [Nethtml.Data(error_message var)])]
+
   let find b var =
-    try Hashtbl.find b var
+    try Hashtbl.find b.var var
     with Std_Not_found -> raise(Not_found var)
 
   let fail_not_a_fun var =
@@ -600,7 +617,11 @@ struct
   let subst_to_string b ctx var args =
     match find b var with
     | String s -> (match args with [] -> html_encode s | _ -> fail_not_a_fun var)
-    | Fun f -> html_encode(f ctx args)
+    | Fun f ->
+       (try html_encode(f ctx args)
+        with e ->
+          b.on_error var e;
+          error_message var)
     | Html _ | Fun_html _ ->
        invalid_arg(sprintf "Weberizer.Binding: The binding %S returns HTML \
                             but is used at a place where only strings are \
@@ -612,8 +633,16 @@ struct
                   | [] -> [Nethtml.Data(html_encode s)]
                   | _ -> fail_not_a_fun var)
     | Html h -> h
-    | Fun_html f -> f ctx args
-    | Fun f -> [Nethtml.Data(html_encode(f (ctx :> [`page] Context.t) args))]
+    | Fun_html f ->
+       (try f ctx args
+        with e ->
+          b.on_error var e;
+          html_error_message var)
+    | Fun f ->
+       (try  [Nethtml.Data(html_encode(f (ctx :> [`page] Context.t) args))]
+        with e ->
+          b.on_error var e;
+          html_error_message var)
 end
 
 (* Perform all includes first -- so other bindings receive the HTML
