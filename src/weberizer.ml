@@ -577,10 +577,11 @@ struct
     | Fun of ([`page] Context.t -> string list -> string)
 
   type t = { var: (string, data) Hashtbl.t;
-             mutable on_error: string (* var *) -> exn -> unit }
+             mutable on_error: string (* var *) -> string list -> exn -> unit }
 
   let make () =
-    let on_error v e =
+    let on_error var args e =
+      let v = String.concat " " (var :: args) in
       Printf.eprintf "ERROR: Weberizer.Binding: $(%s) raised %S.\n%!"
                      v (Printexc.to_string e) in
     { var = Hashtbl.create 20; on_error }
@@ -599,12 +600,13 @@ struct
 
   (* Error message included in the HTML and possibly displayed to the
       user.  Should not contain confidential information. *)
-  let error_message var =
-    Printf.sprintf "The function associated to $(%s) raised an exception" var
+  let error_message var args =
+    let v = String.concat " " (var :: args) in
+    Printf.sprintf "The function associated to $(%s) raised an exception" v
 
-  let html_error_message var =
+  let html_error_message var args =
     [Nethtml.Element("span", ["class", "weberizer-error"],
-                     [Nethtml.Data(error_message var)])]
+                     [Nethtml.Data(error_message var args)])]
 
   let find b var =
     try Hashtbl.find b.var var
@@ -620,8 +622,8 @@ struct
     | Fun f ->
        (try html_encode(f ctx args)
         with e ->
-          b.on_error var e;
-          error_message var)
+          b.on_error var args e;
+          error_message var args)
     | Html _ | Fun_html _ ->
        invalid_arg(sprintf "Weberizer.Binding: The binding %S returns HTML \
                             but is used at a place where only strings are \
@@ -636,13 +638,13 @@ struct
     | Fun_html f ->
        (try f ctx args
         with e ->
-          b.on_error var e;
-          html_error_message var)
+          b.on_error var args e;
+          html_error_message var args)
     | Fun f ->
        (try  [Nethtml.Data(html_encode(f (ctx :> [`page] Context.t) args))]
         with e ->
-          b.on_error var e;
-          html_error_message var)
+          b.on_error var args e;
+          html_error_message var args)
 end
 
 (* Perform all includes first -- so other bindings receive the HTML

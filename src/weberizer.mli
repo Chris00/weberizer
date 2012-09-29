@@ -117,10 +117,10 @@ sig
                    ([`page] Context.t -> string list -> string) -> unit
   (** [fun_string b var f] add to the binding [var] -> [f] to [b]. *)
 
-  val on_error : t -> (string -> exn -> unit) -> unit
-  (** [on_error b f] when a function associated to a variable [v] raises
-      an exception [e], call [f v e].  The default value for [f]
-      prints an error on [stderr]. *)
+  val on_error : t -> (string -> string list -> exn -> unit) -> unit
+  (** [on_error b f] when a function associated to a variable [v]
+      applied to the arguments [a] raises an exception [e], call [f v
+      a e].  The default value for [f] prints an error on [stderr]. *)
 end
 
 val subst : ?base: string -> Binding.t -> html -> html
