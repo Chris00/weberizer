@@ -15,6 +15,7 @@ src/META
 src/weberizer.mllib
 AUTHORS.txt
 README.txt
+INSTALL.txt
 myocamlbuild.ml
 setup.ml
 API.docdir
