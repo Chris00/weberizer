@@ -555,26 +555,12 @@ let compile ?module_name f =
 
 module Binding =
 struct
-  (* Seal the module so correct use is guaranteed in the rest of the code. *)
-  module Context : sig
-    type -'a t (* e.g. ([`page|`content] t :> [`page] t) *)
-    val of_page : html -> [`page] t
-    val with_content : [> `page] t -> html -> [`page|`content] t
-    val content : [> `content] t -> html
-    val page : [> `page] t -> html
-  end = struct
-    type 'a t = { content: html;  page: html }
-    let of_page p = { content = [];  page = p }
-    let with_content ctx content = { ctx with content }
-    let content t = t.content
-    let page t = t.page
-  end
 
   type data =
     | Html of html
     | String of string
-    | Fun_html of ([`content| `page] Context.t -> string list -> html)
-    | Fun of ([`page] Context.t -> string list -> string)
+    | Fun_html of (< content: html; page: html > -> string list -> html)
+    | Fun of (< page: html > -> string list -> string)
 
   type t = { var: (string, data) Hashtbl.t;
              mutable on_error: string (* var *) -> string list -> exn -> unit }
@@ -641,7 +627,7 @@ struct
           b.on_error var args e;
           html_error_message var args)
     | Fun f ->
-       (try  [Nethtml.Data(html_encode(f (ctx :> [`page] Context.t) args))]
+       (try  [Nethtml.Data(html_encode(f (ctx :> < page: html >) args))]
         with e ->
           b.on_error var args e;
           html_error_message var args)
@@ -704,7 +690,10 @@ and subst_element bindings ctx = function
         [Nethtml.Element(el, args, subst_html bindings ctx content)]
       else
         (* "include"s are supposed to be done already. *)
-        let ctx = Binding.Context.with_content ctx content in
+        let ctx = object
+            method page = ctx#page
+            method content = content
+          end in
         let new_content = Binding.subst_to_html bindings ctx ml.var ml.args in
         match ml.strip with
         | `No -> [Nethtml.Element(el, args, new_content)]
@@ -717,7 +706,7 @@ and subst_element bindings ctx = function
 let subst ?base bindings html =
   let base = match base with None -> Sys.getcwd() | Some p -> p in
   let html = perform_includes base html in
-  subst_html bindings (Binding.Context.of_page html) html
+  subst_html bindings (object method page = html end) html
 
 let read ?base ?bindings fname =
   let base = match base with None -> Filename.dirname fname | Some p -> p in
