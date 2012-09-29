@@ -555,11 +555,26 @@ let compile ?module_name f =
 
 module Binding =
 struct
+  (* Seal the module so correct use is guaranteed in the rest of the code. *)
+  module Context : sig
+    type -'a t (* e.g. ([`page|`content] t :> [`page] t) *)
+    val of_page : html -> [`page] t
+    val with_content : [> `page] t -> html -> [`page|`content] t
+    val content : [> `content] t -> html
+    val page : [> `page] t -> html
+  end = struct
+    type 'a t = { content: html;  page: html }
+    let of_page p = { content = [];  page = p }
+    let with_content ctx content = { ctx with content }
+    let content t = t.content
+    let page t = t.page
+  end
+
   type data =
     | Html of html
     | String of string
-    | Fun_html of (string list -> content:html -> html -> html)
-    | Fun of (string list -> html -> string)
+    | Fun_html of ([`content| `page] Context.t -> string list -> html)
+    | Fun of ([`page] Context.t -> string list -> string)
 
   type t = (string, data) Hashtbl.t
 
@@ -582,23 +597,23 @@ struct
     invalid_arg(sprintf "%S is bound to a variable but used \
 		as a function in the HTML template" var)
 
-  let subst_to_string b whole_html var args =
+  let subst_to_string b ctx var args =
     match find b var with
     | String s -> (match args with [] -> html_encode s | _ -> fail_not_a_fun var)
-    | Fun f -> html_encode(f args whole_html)
+    | Fun f -> html_encode(f ctx args)
     | Html _ | Fun_html _ ->
        invalid_arg(sprintf "Weberizer.Binding: The binding %S returns HTML \
                             but is used at a place where only strings are \
                             allowed" var)
 
-  let subst_to_html b ~content whole_html var args =
+  let subst_to_html b ctx var args =
     match find b var with
     | String s -> (match args with
                   | [] -> [Nethtml.Data(html_encode s)]
                   | _ -> fail_not_a_fun var)
     | Html h -> h
-    | Fun_html f -> f args ~content whole_html
-    | Fun f -> [Nethtml.Data(html_encode(f args whole_html))]
+    | Fun_html f -> f ctx args
+    | Fun f -> [Nethtml.Data(html_encode(f (ctx :> [`page] Context.t) args))]
 end
 
 (* Perform all includes first -- so other bindings receive the HTML
@@ -626,52 +641,53 @@ and perform_includes base html =
   List.concat(List.map (perform_includes_el base) html)
 
 
-let subst_var b whole_html v =
+let subst_var b ctx v =
   match split_on_spaces v with
   | [] | "" :: _ -> invalid_arg "Empty variables are not allowed"
   | v :: args ->
-      if valid_ocaml_id v then Binding.subst_to_string b whole_html v args
+      if valid_ocaml_id v then Binding.subst_to_string b ctx v args
       else invalid_arg(sprintf "Function name %S is not valid" v)
 
 (* Substitute variables in HTML elements arguments. *)
-let subst_arg bindings whole_html s =
+let subst_arg bindings ctx s =
   let buf = Buffer.create 100 in
   let add_string _ s = Buffer.add_string buf s in
-  let add_var _ v = Buffer.add_string buf (subst_var bindings whole_html v) in
+  let add_var _ v = Buffer.add_string buf (subst_var bindings ctx v) in
   parse_string_range add_string add_var () s 0 0 (String.length s);
   Buffer.contents buf
 
-let subst_to_html bindings whole_html s =
+let subst_to_html bindings ctx s =
   let add_string l s = Nethtml.Data s :: l in
-  let add_var l v = Nethtml.Data(subst_var bindings whole_html v) :: l in
+  let add_var l v = Nethtml.Data(subst_var bindings ctx v) :: l in
   List.rev(parse_string_range add_string add_var [] s 0 0 (String.length s))
 
-let rec subst_element bindings whole_html = function
-  | Nethtml.Data s -> subst_to_html bindings whole_html s
+let rec subst_html bindings ctx html =
+  List.concat(List.map (subst_element bindings ctx) html)
+
+and subst_element bindings ctx = function
+  | Nethtml.Data s -> subst_to_html bindings ctx s
   | Nethtml.Element(el, args, content) ->
-      let args, ml = split_args (subst_arg bindings whole_html) [] args in
+      let args, ml = split_args (subst_arg bindings ctx) [] args in
       if ml.content = "" then
-        [Nethtml.Element(el, args, subst_html bindings whole_html content)]
+        (* No OCaml variable, recurse. *)
+        [Nethtml.Element(el, args, subst_html bindings ctx content)]
       else
         (* "include"s are supposed to be done already. *)
+        let ctx = Binding.Context.with_content ctx content in
         let new_content =
-          Binding.subst_to_html bindings ~content whole_html
-                                ml.content ml.args in
+          Binding.subst_to_html bindings ctx ml.content ml.args in
         match ml.strip with
         | `No -> [Nethtml.Element(el, args, new_content)]
         | `Yes -> new_content
         | `If_empty -> (if new_content = [] then []
                        else [Nethtml.Element(el, args, new_content)])
 
-and subst_html bindings whole_html html =
-  List.concat(List.map (subst_element bindings whole_html) html)
-
 (* Function bindings receive the pristine HTML in case they want to
    parse it to generate data (e.g. a table of content). *)
 let subst ?base bindings html =
   let base = match base with None -> Sys.getcwd() | Some p -> p in
   let html = perform_includes base html in
-  subst_html bindings html html
+  subst_html bindings (Binding.Context.of_page html) html
 
 let read ?base ?bindings fname =
   let base = match base with None -> Filename.dirname fname | Some p -> p in
