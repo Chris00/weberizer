@@ -237,7 +237,7 @@ type document =
 
 (* Accumulator keeping given OCaml arguments *)
 type ocaml_args = {
-  mutable content: string; (* var name or "" *)
+  mutable var: string; (* var name or "" *)
   mutable args: string list; (* possible function arguments *)
   mutable strip: strip;
 }
@@ -258,7 +258,7 @@ let rec split_args_set_ml parse_string ml args all = match all with
         if a = "content" then
           match split_on_spaces v with
           | v :: args when valid_ocaml_id v ->
-            ml.content <- v;  ml.args <- args
+            ml.var <- v;  ml.args <- args
           | _ -> failwith(sprintf "The variable name %S is not valid" v)
         else if a = "strip" then
           let v = strip_spaces v in
@@ -267,7 +267,7 @@ let rec split_args_set_ml parse_string ml args all = match all with
         else if a = "replace" then
           match split_on_spaces v with
           | v :: args when valid_ocaml_id v ->
-            ml.content <- v;  ml.args <- args;  ml.strip <- `Yes
+            ml.var <- v;  ml.args <- args;  ml.strip <- `Yes
           | _ -> failwith(sprintf "The variable name %S is not valid" v)
       end;
       split_args_set_ml parse_string ml args tl
@@ -276,7 +276,7 @@ let rec split_args_set_ml parse_string ml args all = match all with
       split_args_set_ml parse_string ml ((arg, parse_string v) :: args) tl
 
 let split_args parse_string args all =
-  let ml = { content = "";  args = [];  strip = `No } in
+  let ml = { var = "";  args = [];  strip = `No } in
   let args = split_args_set_ml parse_string ml args all in
   args, ml
 
@@ -291,9 +291,9 @@ let rec parse_element h html = match html with
   | Nethtml.Data(s) -> [Data(parse_string h s)]
   | Nethtml.Element(el, args, content) ->
     let args, ml = split_args (parse_string h) [] args in
-    if ml.content = "" then
+    if ml.var = "" then
       [Element(el, args, parse_html h content)]
-    else if ml.content = "include" then (
+    else if ml.var = "include" then (
       let content = List.concat(List.map (read_and_parse h) ml.args) in
       match ml.strip with
       | `No -> [Element(el, args, content)]
@@ -302,8 +302,8 @@ let rec parse_element h html = match html with
                      else [Element(el, args, content)])
     )
     else (
-      Var.add h ml.content (if ml.args = [] then Var.HTML else Var.Fun_html);
-      [Content(el, args, ml.strip, ml.content, ml.args)]
+      Var.add h ml.var (if ml.args = [] then Var.HTML else Var.Fun_html);
+      [Content(el, args, ml.strip, ml.var, ml.args)]
     )
 
 and parse_html h html = List.concat(List.map (parse_element h) html)
@@ -623,7 +623,7 @@ let rec perform_includes_el base = function
   | Nethtml.Data(_) as e -> [e]
   | Nethtml.Element(el, args0, content0) ->
      let args, ml = split_args identity [] args0 in
-     if ml.content <> "include" then
+     if ml.var <> "include" then
        [Nethtml.Element(el, args0, perform_includes base content0)]
      else
        (* Use the filename location as the new base since this file
@@ -668,14 +668,13 @@ and subst_element bindings ctx = function
   | Nethtml.Data s -> subst_to_html bindings ctx s
   | Nethtml.Element(el, args, content) ->
       let args, ml = split_args (subst_arg bindings ctx) [] args in
-      if ml.content = "" then
+      if ml.var = "" then
         (* No OCaml variable, recurse. *)
         [Nethtml.Element(el, args, subst_html bindings ctx content)]
       else
         (* "include"s are supposed to be done already. *)
         let ctx = Binding.Context.with_content ctx content in
-        let new_content =
-          Binding.subst_to_html bindings ctx ml.content ml.args in
+        let new_content = Binding.subst_to_html bindings ctx ml.var ml.args in
         match ml.strip with
         | `No -> [Nethtml.Element(el, args, new_content)]
         | `Yes -> new_content
