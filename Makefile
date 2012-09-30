@@ -19,7 +19,11 @@ setup.data: setup.ml
 setup.ml: _oasis
 	oasis setup
 
-doc install uninstall reinstall: setup.log
+doc install uninstall: setup.log
+	ocaml setup.ml -$@
+
+reinstall: setup.log
+	ocamlfind remove $(PKGNAME)
 	ocaml setup.ml -$@
 
 upload-doc: doc
