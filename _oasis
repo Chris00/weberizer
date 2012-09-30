@@ -15,7 +15,7 @@ Library weberizer
   Modules:        Weberizer
   BuildDepends:   netstring, str
 
-Executable weberizer_compile
+Executable weberizer
   Path:           src/
   MainIs:         weberizer_compile.ml
   BuildDepends:   weberizer
