@@ -10,13 +10,13 @@ Plugins:     META (0.2), StdFiles (0.2)
 Homepage:    https://github.com/Chris00/weberizer
 
 Library weberizer
-  Path:           src/
+  Path:           src/lib
   BuildTools:  	  ocamlbuild
   Modules:        Weberizer
   BuildDepends:   netstring, str
 
-Executable weberizer_compile
-  Path:           src/
+Executable weberizer
+  Path:           src/app
   MainIs:         weberizer_compile.ml
   BuildDepends:   weberizer
   CompiledObject: best

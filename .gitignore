@@ -11,8 +11,8 @@ _build
 *.native
 *.data
 *.log
-src/META
-src/weberizer.mllib
+src/lib/META
+src/lib/weberizer.mllib
 AUTHORS.txt
 README.txt
 INSTALL.txt
