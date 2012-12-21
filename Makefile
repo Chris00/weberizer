@@ -17,7 +17,7 @@ setup.data: setup.ml
 	ocaml $< -configure
 
 setup.ml: _oasis
-	oasis setup
+	oasis setup -setup-update dynamic
 
 doc install uninstall: setup.log
 	ocaml setup.ml -$@
