@@ -4,8 +4,8 @@ PKG_TARBALL = $(PKGNAME)-$(PKGVERSION).tar.gz
 
 WEB = forge.ocamlcore.org:/home/groups/ocamlweb/htdocs/weberizer/
 
-DISTFILES   = AUTHORS.txt INSTALL.txt README.md _oasis \
-  Makefile myocamlbuild.ml setup.ml _tags src/ demo/
+DISTFILES   = README.md _oasis \
+  Makefile setup.ml _tags src/ demo/
 
 .PHONY: all byte native configure doc install uninstall reinstall upload-doc
 
