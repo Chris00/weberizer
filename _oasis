@@ -1,12 +1,12 @@
 #                                                               -*-conf-*-
-OASISFormat: 0.2
+OASISFormat: 0.3
 Name:        weberizer
 Version:     0.7.2
 Synopsis:    HTML templating system.
 Description: Weberizer compiles HTML templates into OCaml modules.
 Authors:     Christophe Troestler
 License:     LGPL-3.0 with OCaml linking exception
-Plugins:     META (0.2), StdFiles (0.2)
+Plugins:     META (0.3), StdFiles (0.3)
 Homepage:    https://github.com/Chris00/weberizer
 
 Library weberizer
@@ -25,7 +25,7 @@ Executable weberizer
 
 Document API
   Title:           API reference for Weberizer
-  Type:            OCamlbuild (0.2)
+  Type:            OCamlbuild (0.3)
   InstallDir:      $docdir/api
   BuildTools:      ocamldoc, ocamlbuild
   XOCamlbuildPath: .
