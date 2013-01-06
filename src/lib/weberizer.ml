@@ -586,13 +586,14 @@ struct
 
   (* Error message included in the HTML and possibly displayed to the
       user.  Should not contain confidential information. *)
-  let error_message var args =
+  let error_message var args exn =
     let v = String.concat " " (var :: args) in
-    Printf.sprintf "The function associated to $(%s) raised an exception" v
+    Printf.sprintf "The function associated to $(%s) raised the exception %S"
+                   v (Printexc.to_string exn)
 
-  let html_error_message var args =
+  let html_error_message var args exn =
     [Nethtml.Element("span", ["class", "weberizer-error"],
-                     [Nethtml.Data(error_message var args)])]
+                     [Nethtml.Data(error_message var args exn)])]
 
   let find b var =
     try Hashtbl.find b.var var
@@ -609,7 +610,7 @@ struct
        (try html_encode(f ctx args)
         with e ->
           b.on_error var args e;
-          error_message var args)
+          error_message var args e)
     | Html _ | Fun_html _ ->
        invalid_arg(sprintf "Weberizer.Binding: The binding %S returns HTML \
                             but is used at a place where only strings are \
@@ -625,12 +626,12 @@ struct
        (try f ctx args
         with e ->
           b.on_error var args e;
-          html_error_message var args)
+          html_error_message var args e)
     | Fun f ->
        (try  [Nethtml.Data(html_encode(f (ctx :> < page: html >) args))]
         with e ->
           b.on_error var args e;
-          html_error_message var args)
+          html_error_message var args e)
 end
 
 (* Perform all includes first -- so other bindings receive the HTML
