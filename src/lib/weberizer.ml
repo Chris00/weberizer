@@ -1126,3 +1126,96 @@ and apply_relative_url_element base = function
 let relative_url_are_from_base p html =
   let base = make_url ip_url_syntax ~path:(Path.to_base_split p) in
   apply_relative_url base html
+
+
+(* Caching values
+ ***********************************************************************)
+
+module Cache = struct
+  type 'a t = {
+    name: string;
+    fname: string; (* filmename used for the caching *)
+    mutable update: 'a option -> 'a;
+    mutable deps: (unit -> unit) list; (* functions to run to update deps,
+                                        see [perform_update]. *)
+    timeout: float;
+    new_if: 'a t -> bool;
+    debug: bool;
+  }
+
+  let cache_value t v =
+    let fh = open_out_bin t.fname in
+    output_value fh v;
+    close_out fh
+
+  let update_dependencies t = List.iter (fun f -> f()) t.deps
+
+  let time t = (Unix.stat t.fname).Unix.st_mtime
+
+  let get ?(update=false) t =
+    if not(Sys.file_exists t.fname) then (
+      if t.debug then
+        eprintf "Weberizer.Cache: %s: no cache file, compute...%!" t.name;
+      update_dependencies t;
+      let x = t.update None in
+      if t.debug then prerr_endline "done.";
+      cache_value t x;
+      x
+    )
+    else (
+      (* Read the value *)
+      let fh = open_in_bin t.fname in
+      let x = input_value fh in
+      close_in fh;
+      (* Check if update is needed. *)
+      if update
+         || (t.timeout > 0. && time t +. t.timeout < Unix.time())
+         || t.new_if t then (
+        if t.debug then
+          eprintf "Weberizer.Cache: %s: update value... %!" t.name;
+        update_dependencies t;
+        let x_new = t.update(Some x) in
+        if t.debug then prerr_endline "done.";
+        cache_value t x_new;
+        x_new
+      )
+      else (
+        if t.debug then eprintf "Weberizer.Cache: %s: use cache %S.\n%!"
+                                t.name t.fname;
+        x
+      )
+    )
+
+  let default_new_if _ = false (* do not use this to update the cache *)
+
+  let make ?dep ?(new_if=default_new_if) ?(timeout=3600.) ?(debug=false)
+           name f =
+    let base = "weberizer-" ^ Digest.to_hex(Digest.string name) in
+    let fname = Filename.concat Filename.temp_dir_name base in
+    let t = { name = name;
+              fname = fname;
+              update = f;
+              deps = (match dep with
+                      | None -> []
+                      | Some t1 -> [fun () -> ignore(get t1)]);
+              timeout = timeout;
+              new_if = new_if;
+              debug = debug } in
+    t
+
+  let result ?dep ?new_if ?timeout ?debug name f =
+    get(make ?dep ?new_if ?timeout ?debug name f)
+
+  let update ?f t =
+    match f with
+    | None -> ignore(get t ~update:true)
+    | Some f -> t.update <- f;
+               ignore(get t ~update:true)
+
+  let depend t ~dep =
+    t.deps <- (fun () -> ignore(get dep)) :: t.deps;
+    ignore(get t ~update:true)
+
+
+end
+;;

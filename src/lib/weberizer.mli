@@ -282,3 +282,57 @@ val email : ?args:(string * string) list -> ?content:html -> string -> html
 val protect_emails : html -> html
 (** [protect_emails html] changes all emails hrefs in [html] in
     order to make it more difficult for spammers to harvest them. *)
+
+
+(** Simple cache with dependencies and timeout. *)
+module Cache :
+sig
+  type 'a t
+  (** A cache for elements of type 'a. *)
+
+  val make : ?dep: 'b t -> ?new_if:('a t -> bool) -> ?timeout: float ->
+             ?debug:bool ->
+             string -> ('a option -> 'a) -> 'a t
+  (** [make name f] create a new cache to hold the return value of [f]
+      using the key [name].  [f] is given its previously returned
+      value if any — it may be less work to update it than recreating
+      it afresh (note that, if the file was erased [f None] will be
+      run despite the fact that it is not the first call to [f]).  The
+      cache depends on the initial value [f None] so it will be
+      retrived across multiplie runs of the program.  The type ['a]
+      must be marshal-able.
+
+      @param timeout the number of seconds after which the cached
+      value must be refreshed (running [f] again).  Default: [3600.].
+      A non-positive value means no timeout.
+
+      @param debug print messages on [stderr] about cache usage and
+      refresh.  The string argument is a prefix to these messages to
+      be able to distinguish different caches.  Default: [""] i.e.,
+      no messages. *)
+
+  val update : ?f:('a option -> 'a) -> 'a t -> unit
+  (** [update t] update the cache immediately.  If [f] is given, first
+      set the function generating values for the cache [t] to [f] and
+      then update the cache by running [f]. *)
+
+  val depend : 'a t -> dep:'b t -> unit
+  (** [depend t t'] says that the cache [t] depends on the cache [t']
+      i.e. that before updating [t], one must update [t']. *)
+
+  val get : ?update: bool -> 'a t -> 'a
+  (** Get the value stored in the cache.  This operation will update
+      the cached value if necessary.
+
+      @param update if [true], force an update.  Default: [false]. *)
+
+  val result : ?dep: 'b t -> ?new_if:('a t -> bool) -> ?timeout: float ->
+               ?debug:bool ->
+               string -> ('a option -> 'a) -> 'a
+  (** [result name f] is a convenience function equivalent to
+      [get(make name f)]. *)
+
+  val time : 'a t -> float
+  (** The time of the last update of the cache. *)
+;;
+end
