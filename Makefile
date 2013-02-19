@@ -4,8 +4,7 @@ PKG_TARBALL = $(PKGNAME)-$(PKGVERSION).tar.gz
 
 WEB = forge.ocamlcore.org:/home/groups/ocamlweb/htdocs/weberizer/
 
-DISTFILES   = README.md _oasis \
-  Makefile setup.ml _tags src/ demo/
+DISTFILES   = README.md _oasis Makefile _tags src/ demo/
 
 .PHONY: all byte native configure doc install uninstall reinstall upload-doc
 
@@ -34,6 +33,8 @@ upload-doc: doc
 dist tar: $(DISTFILES)
 	mkdir $(PKGNAME)-$(PKGVERSION)
 	cp --parents -r $(DISTFILES) $(PKGNAME)-$(PKGVERSION)/
+# Generate a setup.ml independent of oasis
+	cd $(PKGNAME)-$(PKGVERSION) && oasis setup
 	tar -zcvf $(PKG_TARBALL) $(PKGNAME)-$(PKGVERSION)
 	rm -rf $(PKGNAME)-$(PKGVERSION)
 
