@@ -291,7 +291,7 @@ sig
   (** A cache for elements of type 'a. *)
 
   val make : ?dep: 'b t -> ?new_if:('a t -> bool) -> ?timeout: float ->
-             ?debug:bool ->
+             ?at_exit:bool -> ?debug:bool ->
              string -> ('a option -> 'a) -> 'a t
   (** [make name f] create a new cache to hold the return value of [f]
       using the key [name].  [f] is given its previously returned
@@ -305,6 +305,10 @@ sig
       @param timeout the number of seconds after which the cached
       value must be refreshed (running [f] again).  Default: [3600.].
       A non-positive value means no timeout.
+
+      @param at_exit Update and cache the value when the program
+      exits.  This is interesting for mutable values that may be
+      modified during the course of the program.
 
       @param debug print messages on [stderr] about cache usage and
       refresh.  The string argument is a prefix to these messages to
@@ -327,7 +331,7 @@ sig
       @param update if [true], force an update.  Default: [false]. *)
 
   val result : ?dep: 'b t -> ?new_if:('a t -> bool) -> ?timeout: float ->
-               ?debug:bool ->
+               ?at_exit:bool -> ?debug:bool ->
                string -> ('a option -> 'a) -> 'a
   (** [result name f] is a convenience function equivalent to
       [get(make name f)]. *)

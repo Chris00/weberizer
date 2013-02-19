@@ -1188,7 +1188,8 @@ module Cache = struct
 
   let default_new_if _ = false (* do not use this to update the cache *)
 
-  let make ?dep ?(new_if=default_new_if) ?(timeout=3600.) ?(debug=false)
+  let make ?dep ?(new_if=default_new_if) ?(timeout=3600.)
+           ?at_exit:(cahe_at_exit=false) ?(debug=false)
            name f =
     let base = "weberizer-" ^ Digest.to_hex(Digest.string name) in
     let fname = Filename.concat Filename.temp_dir_name base in
@@ -1201,10 +1202,12 @@ module Cache = struct
               timeout = timeout;
               new_if = new_if;
               debug = debug } in
+    if cahe_at_exit then
+      at_exit (fun () -> ignore(get t ~update:true));
     t
 
-  let result ?dep ?new_if ?timeout ?debug name f =
-    get(make ?dep ?new_if ?timeout ?debug name f)
+  let result ?dep ?new_if ?timeout ?at_exit ?debug name f =
+    get(make ?dep ?new_if ?timeout ?at_exit ?debug name f)
 
   let update ?f t =
     match f with
