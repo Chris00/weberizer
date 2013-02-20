@@ -337,7 +337,8 @@ sig
       [get(make key f)]. *)
 
   val time : 'a t -> float
-  (** The time of the last update of the cache. *)
+  (** The time of the last update of the cache.  Returns
+      [neg_infinity] if the cache is not initialized. *)
 
   val key : 'a t -> string
   (** [key t] returns the key used to store the value. *)

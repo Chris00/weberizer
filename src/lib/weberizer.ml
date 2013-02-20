@@ -1150,8 +1150,12 @@ module Cache = struct
 
   let update_dependencies t = List.iter (fun f -> f()) t.deps
 
-  let time t = (Unix.stat t.fname).Unix.st_mtime
   let key t = t.name
+  let time_last_update t = (Unix.stat t.fname).Unix.st_mtime
+
+  let time t =
+    if Sys.file_exists t.fname then time_last_update t
+    else neg_infinity
 
   let get ?(update=false) t =
     if not(Sys.file_exists t.fname) then (
@@ -1170,7 +1174,7 @@ module Cache = struct
       close_in fh;
       (* Check if update is needed. *)
       if update
-         || (t.timeout > 0. && time t +. t.timeout < Unix.time())
+         || (t.timeout > 0. && time_last_update t +. t.timeout < Unix.time())
          || t.new_if t then (
         if t.debug then
           eprintf "Weberizer.Cache: %s: update value... %!" t.name;
