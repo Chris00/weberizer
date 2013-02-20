@@ -293,8 +293,8 @@ sig
   val make : ?dep: 'b t -> ?new_if:('a t -> bool) -> ?timeout: float ->
              ?at_exit:bool -> ?debug:bool ->
              string -> ('a option -> 'a) -> 'a t
-  (** [make name f] create a new cache to hold the return value of [f]
-      using the key [name].  [f] is given its previously returned
+  (** [make key f] create a new cache to hold the return value of [f]
+      using the [key].  [f] is given its previously returned
       value if any — it may be less work to update it than recreating
       it afresh (note that, if the file was erased [f None] will be
       run despite the fact that it is not the first call to [f]).  The
@@ -333,10 +333,13 @@ sig
   val result : ?dep: 'b t -> ?new_if:('a t -> bool) -> ?timeout: float ->
                ?at_exit:bool -> ?debug:bool ->
                string -> ('a option -> 'a) -> 'a
-  (** [result name f] is a convenience function equivalent to
-      [get(make name f)]. *)
+  (** [result key f] is a convenience function equivalent to
+      [get(make key f)]. *)
 
   val time : 'a t -> float
   (** The time of the last update of the cache. *)
+
+  val key : 'a t -> string
+  (** [key t] returns the key used to store the value. *)
 ;;
 end

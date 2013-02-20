@@ -1151,6 +1151,7 @@ module Cache = struct
   let update_dependencies t = List.iter (fun f -> f()) t.deps
 
   let time t = (Unix.stat t.fname).Unix.st_mtime
+  let key t = t.name
 
   let get ?(update=false) t =
     if not(Sys.file_exists t.fname) then (
