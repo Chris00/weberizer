@@ -1023,6 +1023,8 @@ let arg_to_string (a,v) =
   let v = Str.global_replace quote_quot_re "&quot;" v in
   a ^ "=\"" ^ v ^ "\""
 
+let space_re = Str.regexp "[ \t\n\r]+"
+
 (* See http://javascript.about.com/library/blnoscript.htm for ideas on
    how to get rid of <noscript>. *)
 let email_id = ref 0
@@ -1039,9 +1041,10 @@ let email ?(args=[]) ?content e =
   let javascript = Printf.sprintf
     "local = %S;\n\
      h = %S;\n\
+     hq = %S;\n\
      document.getElementById(%S).innerHTML = \
-     '<a href=\"mailto:' + local + '@' + h + \"\\\" %s>%s<\\/a>\";"
-    local_part host_query id args
+     '<a href=\"mailto:' + local + '@' + hq + \"\\\" %s>%s<\\/a>\";"
+    local_part host (Str.global_replace space_re "%20" host_query) id args
     (match content with
      | None -> "\" + local + '@' + h + \""
      | Some c ->
