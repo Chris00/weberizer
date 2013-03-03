@@ -1132,12 +1132,16 @@ let relative_url_are_from_base p html =
  ***********************************************************************)
 
 module Cache = struct
+  module S = Set.Make(String)
+
   type 'a t = {
-    name: string;
+    name: string;  (* key to store the value *)
     fname: string; (* filmename used for the caching *)
     mutable update: 'a option -> 'a;
-    mutable deps: (unit -> unit) list; (* functions to run to update deps,
-                                        see [perform_update]. *)
+    (* Functions to run to update deps, see [perform_update].  The
+       first element is the [name] and is there to prevent circular
+       dependencies. *)
+    mutable deps: (string * (S.t ref -> unit)) list;
     timeout: float;
     new_if: 'a t -> bool;
     debug: bool;
@@ -1148,8 +1152,6 @@ module Cache = struct
     output_value fh v;
     close_out fh
 
-  let update_dependencies t = List.iter (fun f -> f()) t.deps
-
   let key t = t.name
   let time_last_update t = (Unix.stat t.fname).Unix.st_mtime
 
@@ -1157,11 +1159,19 @@ module Cache = struct
     if Sys.file_exists t.fname then time_last_update t
     else neg_infinity
 
-  let get ?(update=false) t =
+  let update_dependencies t already_updated =
+    let exec_dep (key, f) =
+      if not(S.mem key !already_updated) then (
+        f already_updated; (* supposed to perform a rec update if needed *)
+        already_updated := S.add key !already_updated;
+      ) in
+    List.iter exec_dep t.deps
+
+  let update_and_get ~update t already_updated =
     if not(Sys.file_exists t.fname) then (
       if t.debug then
-        eprintf "Weberizer.Cache: %s: no cache file, compute...%!" t.name;
-      update_dependencies t;
+        eprintf "Weberizer.Cache: %s: no cache file, create... %!" t.name;
+      update_dependencies t already_updated;
       let x = t.update None in
       if t.debug then prerr_endline "done.";
       cache_value t x;
@@ -1178,7 +1188,7 @@ module Cache = struct
          || t.new_if t then (
         if t.debug then
           eprintf "Weberizer.Cache: %s: update value... %!" t.name;
-        update_dependencies t;
+        update_dependencies t already_updated;
         let x_new = t.update(Some x) in
         if t.debug then prerr_endline "done.";
         cache_value t x_new;
@@ -1190,6 +1200,12 @@ module Cache = struct
         x
       )
     )
+
+  let dep_of t =
+    (t.fname, fun updated -> ignore(update_and_get ~update:false t updated))
+
+  let get ?(update=false) t =
+    update_and_get ~update t (ref S.empty)
 
   let default_new_if _ = false (* do not use this to update the cache *)
 
@@ -1203,7 +1219,7 @@ module Cache = struct
               update = f;
               deps = (match dep with
                       | None -> []
-                      | Some t1 -> [fun () -> ignore(get t1)]);
+                      | Some t1 -> [dep_of t1]);
               timeout = timeout;
               new_if = new_if;
               debug = debug } in
@@ -1221,7 +1237,7 @@ module Cache = struct
                ignore(get t ~update:true)
 
   let depend t ~dep =
-    t.deps <- (fun () -> ignore(get dep)) :: t.deps;
+    t.deps <- dep_of dep :: t.deps;
     ignore(get t ~update:true)
 
 
