@@ -1,11 +1,13 @@
 #                                                               -*-conf-*-
 OASISFormat: 0.3
 Name:        weberizer
-Version:     0.7.3
+Version:     0.7.4
 Synopsis:    HTML templating system.
 Description: Weberizer compiles HTML templates into OCaml modules.
 Authors:     Christophe Troestler
+Maintainers: Christophe Troestler <Christophe.Troestler@umons.ac.be>
 License:     LGPL-3.0 with OCaml linking exception
+Categories:  http://web
 Plugins:     META (0.3), StdFiles (0.3)
 Homepage:    https://github.com/Chris00/weberizer
 
