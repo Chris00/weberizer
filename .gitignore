@@ -17,7 +17,6 @@ AUTHORS.txt
 README.txt
 INSTALL.txt
 myocamlbuild.ml
-setup.ml
 API.docdir
 API.odocl
 *.tar.gz
