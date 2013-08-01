@@ -89,6 +89,22 @@ let end_with s p =
   let len_p = String.length p and len_s = String.length s in
   len_p <= len_s  &&  end_with_loop s p (len_p - 1) (len_s - len_p)
 
+
+let buffer_add_file buf fn =
+  let fh = open_in fn in
+  let b = String.create 4096 in
+  let r = ref 1 in (* enter the loop *)
+  while !r > 0 do
+    r := input fh b 0 4096;
+    Buffer.add_substring buf b 0 !r
+  done;
+  close_in fh
+
+let string_of_file fn =
+  let buf = Buffer.create 4096 in
+  buffer_add_file buf fn;
+  Buffer.contents buf
+
 (* Parse strings
  *************************************************************************)
 
@@ -308,7 +324,11 @@ let rec parse_element h html = match html with
 
 and parse_html h html = List.concat(List.map (parse_element h) html)
 
-and read_and_parse h fname = parse_html h (read_html fname)
+and read_and_parse h fn =
+  if Filename.check_suffix fn ".html" || Filename.check_suffix fn ".htm" then
+    parse_html h (read_html fn)
+  else
+    [Data[String(html_encode (string_of_file fn))]]
 
 
 (* Output to a static module
@@ -497,19 +517,11 @@ let compile_html ?trailer_ml ?trailer_mli ?(hide=[]) ?module_name fname =
  *************************************************************************)
 
 let content_of_file file =
-  let fh = open_in file in
-  let buf = Buffer.create 500 in
+  let buf = Buffer.create 4096 in
   (* Add a directive to refer to the original file for errors *)
   Buffer.add_string buf ("# 1 \"" ^ String.escaped file ^ "\"\n");
-  try
-    while true do
-      Buffer.add_string buf (input_line fh);
-      Buffer.add_char buf '\n'
-    done;
-    assert false
-  with End_of_file ->
-    close_in fh;
-    Buffer.contents buf
+  buffer_add_file buf file;
+  Buffer.contents buf
 
 (* Return the content of [file] if it exists or [None] otherwise. *)
 let maybe_content file =
@@ -649,7 +661,11 @@ let rec perform_includes_el base = function
        let include_file fn =
          let fn = if Filename.is_relative fn then Filename.concat base fn
                   else fn in
-         perform_includes (Filename.dirname fn) (read_html fn) in
+         if Filename.check_suffix fn ".html"
+            || Filename.check_suffix fn ".htm" then
+           perform_includes (Filename.dirname fn) (read_html fn)
+         else
+           [Nethtml.Data(html_encode (string_of_file fn))]  in
        let content = List.concat(List.map include_file ml.args) in
        match ml.strip with
        | `No | `If_empty -> [Nethtml.Element(el, args, content)]
