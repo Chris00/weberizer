@@ -1040,6 +1040,7 @@ let arg_to_string (a,v) =
   a ^ "=\"" ^ v ^ "\""
 
 let space_re = Str.regexp "[ \t\n\r]+"
+let newline_re = Str.regexp "[\n\r]+"
 
 (* See http://javascript.about.com/library/blnoscript.htm for ideas on
    how to get rid of <noscript>. *)
@@ -1068,7 +1069,7 @@ let email ?(args=[]) ?content e =
         let ch = new Netchannels.output_buffer buf in
         Nethtml.write ch c;
         ch#close_out();
-        Buffer.contents buf) in
+        Str.global_replace newline_re "\\n" (Buffer.contents buf)) in
   let noscript = match content with
     | None -> [Nethtml.Data(local_part);
               Nethtml.Element("abbr", ["title", "(at) &rarr; @"],
