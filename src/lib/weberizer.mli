@@ -291,24 +291,18 @@ sig
   (** A cache for elements of type 'a. *)
 
   val make : ?dep: 'b t -> ?new_if:('a t -> bool) -> ?timeout: float ->
-             ?at_exit:bool -> ?debug:bool ->
+             ?debug:bool ->
              string -> ('a option -> 'a) -> 'a t
   (** [make key f] create a new cache to hold the return value of [f]
-      using the [key].  [f] is given its previously returned
-      value if any — it may be less work to update it than recreating
-      it afresh (note that, if the file was erased [f None] will be
-      run despite the fact that it is not the first call to [f]).  The
-      cache depends on the initial value [f None] so it will be
-      retrived across multiplie runs of the program.  The type ['a]
-      must be marshal-able.
+      using the [key].  [f] is given its previously returned value if
+      any — it may be less work to update it than recreating it
+      afresh.  The disk cache will be updated when the program exits,
+      so its content will persist across multiplie runs of the
+      program.  The type ['a] must be marshal-able.
 
       @param timeout the number of seconds after which the cached
       value must be refreshed (running [f] again).  Default: [3600.].
       A non-positive value means no timeout.
-
-      @param at_exit Update and cache the value when the program
-      exits.  This is interesting for mutable values that may be
-      modified during the course of the program.
 
       @param debug print messages on [stderr] about cache usage and
       refresh.  The string argument is a prefix to these messages to
@@ -331,7 +325,7 @@ sig
       @param update if [true], force an update.  Default: [false]. *)
 
   val result : ?dep: 'b t -> ?new_if:('a t -> bool) -> ?timeout: float ->
-               ?at_exit:bool -> ?debug:bool ->
+               ?debug:bool ->
                string -> ('a option -> 'a) -> 'a
   (** [result key f] is a convenience function equivalent to
       [get(make key f)]. *)

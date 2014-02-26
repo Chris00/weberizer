@@ -1156,7 +1156,10 @@ module Cache = struct
 
   type 'a t = {
     name: string;  (* key to store the value *)
-    fname: string; (* filmename used for the caching *)
+    fname: string; (* filename used for caching on disk *)
+    (* FIXME: Maybe a Weak.t is better for [cache] *)
+    mutable cache : 'a option; (* cached value (so we do not have to hit
+                                 the disk to retrieve it) *)
     mutable update: 'a option -> 'a;
     (* Functions to run to update deps, see [perform_update].  The
        first element is the [name] and is there to prevent circular
@@ -1167,13 +1170,13 @@ module Cache = struct
     debug: bool;
   }
 
-  let cache_value t v =
-    let fh = open_out_bin t.fname in
-    output_value fh v;
-    close_out fh
-
   let key t = t.name
   let time_last_update t = (Unix.stat t.fname).Unix.st_mtime
+
+  (* Touch the filename to record the current time *)
+  let touch t =
+    let fh = open_out_gen [Open_creat; Open_wronly] 0o644 t.fname in
+    close_out fh
 
   let time t =
     if Sys.file_exists t.fname then time_last_update t
@@ -1188,30 +1191,28 @@ module Cache = struct
     List.iter exec_dep t.deps
 
   let update_and_get ~update t already_updated =
-    if not(Sys.file_exists t.fname) then (
+    match t.cache with
+    | None ->
       if t.debug then
-        eprintf "Weberizer.Cache: %s: no cache file, create... %!" t.name;
+        eprintf "Weberizer.Cache: %s: no cache, create... %!" t.name;
       update_dependencies t already_updated;
       let x = t.update None in
       if t.debug then prerr_endline "done.";
-      cache_value t x;
+      t.cache <- Some x;
+      touch t;
       x
-    )
-    else (
-      (* Read the value *)
-      let fh = open_in_bin t.fname in
-      let x = input_value fh in
-      close_in fh;
-      (* Check if update is needed. *)
+    | Some x ->
+      (* Check if an update is needed. *)
       if update
          || (t.timeout > 0. && time_last_update t +. t.timeout < Unix.time())
          || t.new_if t then (
         if t.debug then
           eprintf "Weberizer.Cache: %s: update value... %!" t.name;
         update_dependencies t already_updated;
-        let x_new = t.update(Some x) in
+        let x_new = t.update t.cache in
         if t.debug then prerr_endline "done.";
-        cache_value t x_new;
+        touch t;
+        t.cache <- Some x_new;
         x_new
       )
       else (
@@ -1219,7 +1220,6 @@ module Cache = struct
                                 t.name t.fname;
         x
       )
-    )
 
   let dep_of t =
     (t.fname, fun updated -> ignore(update_and_get ~update:false t updated))
@@ -1230,12 +1230,24 @@ module Cache = struct
   let default_new_if _ = false (* do not use this to update the cache *)
 
   let make ?dep ?(new_if=default_new_if) ?(timeout=3600.)
-           ?at_exit:(cahe_at_exit=false) ?(debug=false)
+           ?(debug=false)
            name f =
     let base = "weberizer-" ^ Digest.to_hex(Digest.string name) in
     let fname = Filename.concat Filename.temp_dir_name base in
+    (* Get the initial value from the file if it exists *)
+    let cache =
+      if Sys.file_exists fname then (
+        if debug then eprintf "Weberizer.Cache: %s: create from %S.\n"
+                              name fname;
+        let fh = open_in_bin fname in
+        let v = input_value fh in
+        close_in fh;
+        v (* no "Some" because t.cache is saved *)
+      )
+      else None in
     let t = { name = name;
               fname = fname;
+              cache = cache;
               update = f;
               deps = (match dep with
                       | None -> []
@@ -1243,12 +1255,16 @@ module Cache = struct
               timeout = timeout;
               new_if = new_if;
               debug = debug } in
-    if cahe_at_exit then
-      at_exit (fun () -> ignore(get t ~update:true));
+    (* At exit, cache the current value on disk. *)
+    at_exit (fun () ->
+             let fh = open_out_bin t.fname in
+             output_value fh t.cache;
+             close_out fh
+            );
     t
 
-  let result ?dep ?new_if ?timeout ?at_exit ?debug name f =
-    get(make ?dep ?new_if ?timeout ?at_exit ?debug name f)
+  let result ?dep ?new_if ?timeout ?debug name f =
+    get(make ?dep ?new_if ?timeout ?debug name f)
 
   let update ?f t =
     match f with
