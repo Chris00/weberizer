@@ -1171,7 +1171,7 @@ module Cache = struct
   }
 
   let key t = t.name
-  let time_last_update t = (Unix.stat t.fname).Unix.st_mtime
+  let time_last_update fname = (Unix.stat fname).Unix.st_mtime
 
   (* Touch the filename to record the current time *)
   let touch t =
@@ -1179,7 +1179,7 @@ module Cache = struct
     close_out fh
 
   let time t =
-    if Sys.file_exists t.fname then time_last_update t
+    if Sys.file_exists t.fname then time_last_update t.fname
     else neg_infinity
 
   let update_dependencies t already_updated =
@@ -1204,7 +1204,7 @@ module Cache = struct
     | Some x ->
       (* Check if an update is needed. *)
       if update
-         || (t.timeout > 0. && time_last_update t +. t.timeout < Unix.time())
+         || t.timeout <= 0. || time_last_update t.fname +. t.timeout < Unix.time()
          || t.new_if t then (
         if t.debug then
           eprintf "Weberizer.Cache: %s: update value... %!" t.name;
@@ -1234,9 +1234,10 @@ module Cache = struct
            name f =
     let base = "weberizer-" ^ Digest.to_hex(Digest.string name) in
     let fname = Filename.concat Filename.temp_dir_name base in
-    (* Get the initial value from the file if it exists *)
+    (* Get the initial value from the file if it is up-to-date *)
     let cache =
-      if Sys.file_exists fname then (
+      if Sys.file_exists fname && timeout > 0.
+         && time_last_update fname +. timeout > Unix.time() then (
         if debug then eprintf "Weberizer.Cache: %s: create from %S.\n"
                               name fname;
         let fh = open_in_bin fname in
