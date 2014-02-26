@@ -1193,33 +1193,33 @@ module Cache = struct
   let update_and_get ~update t already_updated =
     match t.cache with
     | None ->
-      if t.debug then
-        eprintf "Weberizer.Cache: %s: no cache, create... %!" t.name;
-      update_dependencies t already_updated;
-      let x = t.update None in
-      if t.debug then prerr_endline "done.";
-      t.cache <- Some x;
-      touch t;
-      x
+       if t.debug then
+         eprintf "Weberizer.Cache: %s: no cache, create... %!" t.name;
+       update_dependencies t already_updated;
+       let x = t.update None in
+       if t.debug then prerr_endline "done.";
+       t.cache <- Some x;
+       touch t;
+       x
     | Some x ->
-      (* Check if an update is needed. *)
-      if update
-         || t.timeout <= 0. || time_last_update t.fname +. t.timeout < Unix.time()
-         || t.new_if t then (
-        if t.debug then
-          eprintf "Weberizer.Cache: %s: update value... %!" t.name;
-        update_dependencies t already_updated;
-        let x_new = t.update t.cache in
-        if t.debug then prerr_endline "done.";
-        touch t;
-        t.cache <- Some x_new;
-        x_new
-      )
-      else (
-        if t.debug then eprintf "Weberizer.Cache: %s: use cache %S.\n%!"
-                                t.name t.fname;
-        x
-      )
+       (* Check if an update is needed. *)
+       if update
+          || t.timeout <= 0. || time_last_update t.fname +. t.timeout < Unix.time()
+          || t.new_if t then (
+         if t.debug then
+           eprintf "Weberizer.Cache: %s: update value... %!" t.name;
+         update_dependencies t already_updated;
+         let x_new = t.update t.cache in
+         if t.debug then prerr_endline "done.";
+         touch t;
+         t.cache <- Some x_new;
+         x_new
+       )
+       else (
+         if t.debug then eprintf "Weberizer.Cache: %s: use cache %S.\n%!"
+                                 t.name t.fname;
+         x
+       )
 
   let dep_of t =
     (t.fname, fun updated -> ignore(update_and_get ~update:false t updated))
