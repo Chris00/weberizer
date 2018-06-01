@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/Chris00/weberizer.svg?branch=master)](https://travis-ci.org/Chris00/weberizer)
+
 Weberizer
 =========
 
