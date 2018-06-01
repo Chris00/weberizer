@@ -13,6 +13,19 @@ This approach will enable to easily add some security features if
 desired — like forcing several variables to be set before the template
 can be rendered.
 
+Installation
+------------
+
+The simplest way to install this library and program is to use
+[opam](https://opam.ocaml.org/):
+
+    opam install weberizer
+
+The program to transform HTML files is called `weberizer`.  Issue
+`weberizer templ.html` to generate `templ.ml` and `templ.mli`.  The
+templating “variables” are described at the beginnin of
+[weberizer.mli](lib/weberizer.mli).  See also the [example](demo/).
+
 Licence
 -------
 
