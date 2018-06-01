@@ -92,11 +92,11 @@ let end_with s p =
 
 let buffer_add_file buf fn =
   let fh = open_in fn in
-  let b = String.create 4096 in
+  let b = Bytes.create 4096 in
   let r = ref 1 in (* enter the loop *)
   while !r > 0 do
     r := input fh b 0 4096;
-    Buffer.add_substring buf b 0 !r
+    Buffer.add_subbytes buf b 0 !r
   done;
   close_in fh
 
@@ -593,9 +593,6 @@ struct
   let fun_html b var f = Hashtbl.add b.var var (Fun_html f)
   let fun_string b var f = Hashtbl.add b.var var (Fun f)
 
-  exception Std_Not_found = Not_found
-  exception Not_found of string
-
   (* Error message included in the HTML and possibly displayed to the
       user.  Should not contain confidential information. *)
   let error_message var args exn =
@@ -607,9 +604,13 @@ struct
     [Nethtml.Element("span", ["class", "weberizer-error"],
                      [Nethtml.Data(error_message var args exn)])]
 
+  exception Binding_Not_found of string
+
   let find b var =
     try Hashtbl.find b.var var
-    with Std_Not_found -> raise(Not_found var)
+    with Not_found -> raise(Binding_Not_found var)
+
+  exception Not_found = Binding_Not_found
 
   let fail_not_a_fun var =
     invalid_arg(sprintf "%S is bound to a variable but used \
@@ -752,7 +753,7 @@ let rec add_body_of_element acc el = match el with
   | Nethtml.Data _ -> acc
   | Nethtml.Element("body", _, content) -> acc @ content
   | Nethtml.Element(_, _, content) -> get_body_of acc content
-and get_body_of acc content = List.fold_left add_body_of_element [] content
+and get_body_of acc content = List.fold_left add_body_of_element acc content
 
 let body_of html =
   let body = get_body_of [] html in
@@ -856,14 +857,14 @@ struct
   let base_lang_ext_of_filename f =
     if Str.string_match lang_re f 0 then
       (Str.matched_group 1 f,
-       (try String.lowercase(Str.matched_group 3 f) with _ -> ""),
+       (try String.lowercase_ascii(Str.matched_group 3 f) with _ -> ""),
        Str.matched_group 4 f)
     else f, "", ""
 
   let language p =
     let f = filename p in
     if Str.string_match lang_re f 0 then
-      (try String.lowercase(Str.matched_group 3 f) with _ -> "")
+      (try String.lowercase_ascii(Str.matched_group 3 f) with _ -> "")
     else ""
 
   (** Returns the descriptive name of the file/dir pointed by [p] for
@@ -877,12 +878,12 @@ struct
           let index = p.full_path ^ (if lang = "" then "/index.html"
                                      else "/index." ^ lang ^ ".html") in
           let title = title_of_file index in
-          if title = "" then String.capitalize p.name else title
+          if title = "" then String.capitalize_ascii p.name else title
         else
           let title = title_of_file p.full_path in
           if title = "" then
             let base, _, _ = base_lang_ext_of_filename p.name in
-            String.capitalize base
+            String.capitalize_ascii base
           else title in
       p.desc <- (lang, desc) :: p.desc;
       desc
@@ -1233,7 +1234,7 @@ module Cache = struct
            ?(debug=false)
            name f =
     let base = "weberizer-" ^ Digest.to_hex(Digest.string name) in
-    let fname = Filename.concat Filename.temp_dir_name base in
+    let fname = Filename.concat (Filename.get_temp_dir_name()) base in
     (* Get the initial value from the file if it is up-to-date *)
     let cache =
       if Sys.file_exists fname && timeout > 0.

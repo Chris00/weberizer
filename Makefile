@@ -1,6 +1,6 @@
 
 build:
-	jbuilder build @install @demo #--dev
+	jbuilder build @install @demo --dev
 
 install uninstall doc:
 	jbuilder $@

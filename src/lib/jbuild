@@ -4,5 +4,5 @@
  ((name        weberizer)
   (public_name weberizer)
   (modules    (weberizer))
-  (libraries  (threads netstring str))
+  (libraries  (threads netstring str bytes))
   (synopsis "Compiles HTML templates into OCaml modules")))

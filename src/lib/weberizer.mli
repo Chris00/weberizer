@@ -94,6 +94,7 @@ sig
 
   val string : t -> string -> string -> unit
   (** [string b var s] add to the binding [var] -> [s] to [b]. *)
+
   val html : t -> string -> html -> unit
   (** [html b var h] add to the binding [var] -> [h] to [b]. *)
 
@@ -195,9 +196,17 @@ sig
   (** The path from the directory of the filename to the base
       directory.  One can see it as the "inverse" of [from_base_split]. *)
 
+  val parent : t -> t
+  (** [parent p] returns the parent of [p].
+     @raise Failure if it is the base path. *)
+
   val full : t -> string
   (** Returns a path that can be used to open the file (or query the
       directory). *)
+
+  val language : t -> string
+  (** [language p] returns the language of the filename based on the
+     convention that it has the form "name.lang.ext". *)
 
   val description : t -> string
   (** [description p] returns the descriptive name for the file
