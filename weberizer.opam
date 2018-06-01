@@ -13,4 +13,5 @@ build: [
 ]
 depends: [
   "jbuilder" {build}
+  "ocamlnet"
 ]
