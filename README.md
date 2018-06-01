@@ -1,4 +1,5 @@
 [![Build Status](https://travis-ci.org/Chris00/weberizer.svg?branch=master)](https://travis-ci.org/Chris00/weberizer)
+[![Build status](https://ci.appveyor.com/api/projects/status/6danpd8mm0rh7qet?svg=true)](https://ci.appveyor.com/project/Chris00/weberizer)
 
 Weberizer
 =========
