@@ -1,0 +1,10 @@
+(jbuild_version 1)
+
+(alias
+ ((name demo)
+  (deps (UMONS.ml UMONS.mli))))
+
+(rule
+ ((targets (UMONS.ml UMONS.mli))
+  (deps    ((glob_files UMONS.html*)))
+  (action  (run weberizer_compile UMONS.html))))

@@ -1,0 +1,8 @@
+(jbuild_version 1)
+
+(library
+ ((name        weberizer)
+  (public_name weberizer)
+  (modules    (weberizer))
+  (libraries  (threads netstring str))
+  (synopsis "Compiles HTML templates into OCaml modules")))
