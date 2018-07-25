@@ -1,0 +1,8 @@
+(alias
+ (name demo)
+ (deps UMONS.ml UMONS.mli))
+
+(rule
+ (targets UMONS.ml UMONS.mli)
+ (deps    (glob_files UMONS.html*))
+ (action  (run %{bin:weberizer} UMONS.html)))

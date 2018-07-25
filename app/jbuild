@@ -1,6 +1,0 @@
-(jbuild_version 1)
-
-(executable
- ((name        weberizer_compile)
-  (public_name weberizer)
-  (libraries  (weberizer))))

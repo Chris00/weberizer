@@ -1,0 +1,4 @@
+(executable
+ (name        weberizer_compile)
+ (public_name weberizer)
+ (libraries   weberizer))

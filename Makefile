@@ -1,12 +1,12 @@
 
 build:
-	jbuilder build @install @demo --dev
+	dune build @install @demo
 
 install uninstall doc:
-	jbuilder $@
+	dune $@
 
 clean:
-	jbuilder clean
+	dune clean
 
 
 .PHONY: build install uninstall doc clean
