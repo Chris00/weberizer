@@ -26,8 +26,10 @@ The simplest way to install this library and program is to use
 
 The program to transform HTML files is called `weberizer`.  Issue
 `weberizer templ.html` to generate `templ.ml` and `templ.mli`.  The
-templating “variables” are described at the beginnin of
-[weberizer.mli](lib/weberizer.mli).  See also the [example](demo/).
+templating “variables” are described at the beginning of
+[weberizer.mli](lib/weberizer.mli) (also available in
+[HTML](http://chris00.github.io/weberizer/doc/weberizer/Weberizer/)).
+See also the [example](demo/).
 
 Licence
 -------
