@@ -2,8 +2,11 @@
 build:
 	dune build @install @demo
 
-install uninstall doc:
+install uninstall:
 	dune $@
+
+doc:
+	dune build @doc
 
 clean:
 	dune clean

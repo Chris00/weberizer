@@ -31,7 +31,10 @@
     - [${<ident>}] which is replaced by the content (a string) of the
       variable <indent>;
     - [${f v1 ... vN}] which is replaced by the string returned by the
-      function [f] applied to the list [[v1; ...; vN]]. *)
+      function [f] applied to the list [[v1; ...; vN]].
+
+    @version %%VERSION%%
+ *)
 
 type html = Nethtml.document list
 
@@ -86,10 +89,10 @@ sig
       in the binding. *)
 
   val make : unit -> t
-  (** [make()] @returns a new empty collection of bindings. *)
+  (** [make()] returns a new empty collection of bindings. *)
 
   val copy : t -> t
-  (** [copy b] @returns a new collection of bindings initially
+  (** [copy b] returns a new collection of bindings initially
       containing the same bindings as [b]. *)
 
   val string : t -> string -> string -> unit
@@ -116,8 +119,8 @@ sig
 
   val on_error : t -> (string -> string list -> exn -> unit) -> unit
   (** [on_error b f] when a function associated to a variable [v]
-      applied to the arguments [a] raises an exception [e], call [f v
-      a e].  The default value for [f] prints an error on [stderr]. *)
+      applied to the arguments [a] raises an exception [e], call
+      [f v a e].  The default value for [f] prints an error on [stderr]. *)
 end
 
 val subst : ?base: string -> Binding.t -> html -> html
@@ -144,7 +147,7 @@ val read : ?base: string -> ?bindings:Binding.t -> string -> html
     @raise Sys_error if the file cannot be read. *)
 
 
-(** {1 Utilities} *)
+(** {2 Utilities} *)
 
 val write_html : ?doctype:bool -> ?perm: int -> html -> string -> unit
 (** [write_html html fname] writes the textual representation of the
@@ -248,11 +251,11 @@ val iter_html :
   string -> (string -> Path.t -> html) -> unit
 (** [iter_html base f] iterates [f lang file] on all HTML files under
     [base] (the argument of [f] is guaranteed to be a path to a file).
-    The resulting HTML code is written under the directory [out_dir
-    lang], the subpath begin the relative path of the file
+    The resulting HTML code is written under the directory
+    [out_dir lang], the subpath begin the relative path of the file
     w.r.t. [base] and the filename is the original one with the
-    language removed.  @raise Invalid_argument if [base] is not a
-    directory.
+    language removed.
+    @raise Invalid_argument if [base] is not a directory.
 
     @param lang the accepted languages.  The first one being the
     default one (for files that do not specify a language).
@@ -261,8 +264,8 @@ val iter_html :
     @param exts the allowed file extensions.  Defaut: [[".html"]].
     May be useful, ofr example, if you want to deal PHP pages.
 
-    @param filter examine the file of dir iff the condition [filter
-    rel_dir f] holds on the relative path [rel_dir] from [root] and
+    @param filter examine the file of dir iff the condition
+    [filter rel_dir f] holds on the relative path [rel_dir] from [root] and
     final file or dir [f].  Default: accept all [.html] files.
     Files and dirs starting with a dot are {i always} excluded.
 
