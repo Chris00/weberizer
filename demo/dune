@@ -1,6 +1,11 @@
 (alias
  (name demo)
- (deps UMONS.ml UMONS.mli))
+ (deps demo.exe))
+
+(executable
+ (name      demo)
+ (modules   demo UMONS)
+ (libraries weberizer))
 
 (rule
  (targets UMONS.ml UMONS.mli)

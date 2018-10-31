@@ -43,7 +43,7 @@ let navigation tpl path =
   end
 
 let navigation_of_path tpl ?(prefix=[]) p =
-  navigation tpl (prefix @ Template.Path.navigation p)
+  navigation tpl (prefix @ Weberizer.Path.navigation p)
 
 
 let stylesheet tpl ?(rel_base=true) url =
@@ -98,10 +98,10 @@ let toolbar_en contact map =
    "Calendar", "http://portail.umons.ac.be/EN/University/admin/scrp/Pages/Agenda.aspx" ]
 
 let toolbar tpl ?contact ?map ?base ~lang:l p =
-  let l = String.lowercase l in
+  let l = String.lowercase_ascii l in
   let tpl = lang tpl l in
   let base = match base with
-    | None -> Template.Path.to_base p
+    | None -> Weberizer.Path.to_base p
     | Some base -> base in
   let tpl = url_base tpl base in
   let contact = match contact with
@@ -128,7 +128,7 @@ let rec list_last_element = function
 
 let bbclone tpl p =
   Set.web_counter tpl begin fun t ->
-    let nav = Template.Path.navigation p in
+    let nav = Weberizer.Path.navigation p in
     let name, _ = list_last_element nav in
     (* HACK: "<?" is not supported by Nethtml, we use the fact that no
        escaping is done when printing Data values.  Do not escape
@@ -143,5 +143,5 @@ let bbclone tpl p =
   end
 
 let languages tpl langs =
-  let langs = List.map (fun (n,u) -> (String.capitalize n, u)) langs in
+  let langs = List.map (fun (n,u) -> (String.capitalize_ascii n, u)) langs in
   languages tpl (horizontal_toolbar langs)

@@ -5,7 +5,7 @@ val banner : t -> ?base:bool -> string -> t
 
 (* @hide toolbar *)
 val toolbar : t -> ?contact:string -> ?map:string -> ?base:string ->
-  lang:string -> Template.Path.t -> t
+  lang:string -> Weberizer.Path.t -> t
 (** [toobar tpl ~lang path] returns a template with the links
     of the toolbar ("Annuaire",...) appropriately filled according
     to the language of the file pointed by the [path].
@@ -21,7 +21,7 @@ val navigation : t -> (string * string) list -> t
     [nav].  The couples of [nav] are of the form [(text, URL)]. *)
 
 val navigation_of_path : t -> ?prefix:(string * string) list ->
-  Template.Path.t -> t
+  Weberizer.Path.t -> t
 (** [navigation_of_path t path] add a navigation bar based on the
     [path]. *)
 
@@ -40,7 +40,7 @@ val javascript : t -> ?rel_base:bool -> string -> t
     [tpl]). *)
 
 (* @hide web_counter *)
-val bbclone : t -> Template.Path.t -> t
+val bbclone : t -> Weberizer.Path.t -> t
 (** [bbclone tpl rel_path fname] adds the PHP bbclone code in order
     to track accesses to the page. *)
 

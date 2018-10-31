@@ -422,6 +422,7 @@ let compile_html ?trailer_ml ?trailer_mli ?(hide=[]) ?module_name fname =
   let fh = open_out (module_name ^ ".ml") in
   let fm = formatter_of_out_channel fh in
   fprintf fm "(* Module generated from the template %s. *)@\n@\n" fname;
+  fprintf fm "[%@%@%@ocaml.warning \"-32\"]@\n";
   fprintf fm "type html = Nethtml.document list@\n@\n";
   fprintf fm "@[<2>type t = {@\n";
   Var.iter h (fun v t ->
@@ -498,9 +499,9 @@ let compile_html ?trailer_ml ?trailer_mli ?(hide=[]) ?module_name fname =
   fprintf fm "type html = Nethtml.document list\n\n";
   fprintf fm "type t\n  (** Immutable template. *)\n\n";
   fprintf fm "val empty : t\n";
-  fprintf fm "  (** Empty (unfilled) template. *)\n";
+  fprintf fm "(** Empty (unfilled) template. *)\n\n";
   fprintf fm "val render : t -> html@\n";
-  fprintf fm "  (** Renders the template as an HTML document. *)\n\n";
+  fprintf fm "(** Renders the template as an HTML document. *)\n\n";
   Var.iter_ab h begin fun v t ->
     if not(List.mem v hide) then
       fprintf fm "val %s : t -> %s -> t\n" v (Var.type_code t.Var.ty)
